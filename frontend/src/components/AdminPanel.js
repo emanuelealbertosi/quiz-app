@@ -112,42 +112,61 @@ const AdminPanel = ({ token }) => {
   };
   
   // Funzione per caricare i livelli di difficoltà
-  const fetchDifficultyLevels = useCallback(async () => {
+  const fetchDifficultyLevels = useCallback(() => {
     try {
-      console.log('Fetching difficulty levels with token:', token);
+      if (!token) {
+        console.error('No authentication token found');
+        setError('Authentication error: No token found. Please log in again.');
+        return;
+      }
       
-      // Debug only: Prova a fare una richiesta diretta senza credentials
-      console.log('Tentativo con richiesta semplificata...');
-      const response = await fetch(ENDPOINTS.ADMIN.DIFFICULTY_LEVELS, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      console.log('Fetching difficulty levels with token:', token ? `${token.substring(0, 10)}...` : 'null');
+      
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.DIFFICULTY_LEVELS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
+      
+      xhr.onload = function() {
+        console.log('Difficulty levels response status:', xhr.status);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('Difficulty levels data received:', data);
+            
+            // Assicuriamoci che difficultyLevels sia sempre un array
+            if (Array.isArray(data)) {
+              console.log('Setting difficulty levels array with', data.length, 'items');
+              setDifficultyLevels(data);
+            } else if (data.items && Array.isArray(data.items)) {
+              console.log('Setting difficulty levels from data.items with', data.items.length, 'items');
+              setDifficultyLevels(data.items);
+            } else {
+              console.error('Unexpected difficulty levels data format:', data);
+              setDifficultyLevels([]);
+            }
+          } catch (e) {
+            console.error('Error parsing JSON from difficulty levels endpoint:', e);
+            setError('Error parsing difficulty levels data');
+            setDifficultyLevels([]);
+          }
+        } else {
+          console.error(`Failed to fetch difficulty levels: ${xhr.status} ${xhr.statusText}`);
+          setError(`Failed to fetch difficulty levels: ${xhr.status} ${xhr.statusText}`);
+          setDifficultyLevels([]);
         }
-      });
+      };
       
-      console.log('Response status:', response.status);
-      console.log('Response headers:', [...response.headers.entries()]);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response body:', errorText);
-        throw new Error(`Failed to fetch difficulty levels: ${response.status} ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Difficulty levels data received:', data);
-      
-      // Assicuriamoci che difficultyLevels sia sempre un array
-      if (Array.isArray(data)) {
-        console.log('Setting difficulty levels array with', data.length, 'items');
-        setDifficultyLevels(data);
-      } else if (data.items && Array.isArray(data.items)) {
-        console.log('Setting difficulty levels from data.items with', data.items.length, 'items');
-        setDifficultyLevels(data.items);
-      } else {
-        console.error('Unexpected difficulty levels data format:', data);
+      xhr.onerror = function() {
+        console.error('Network error occurred while fetching difficulty levels');
+        setError('Network error occurred while fetching difficulty levels');
         setDifficultyLevels([]);
-      }
+      };
+      
+      xhr.send();
     } catch (error) {
       console.error('Error fetching difficulty levels:', error);
       setError('Error fetching difficulty levels: ' + error.message);
@@ -156,34 +175,63 @@ const AdminPanel = ({ token }) => {
   }, [token]);
   
   // Funzione per caricare i percorsi
-  const fetchPaths = useCallback(async () => {
+  const fetchPaths = useCallback(() => {
     try {
-      const response = await fetch(ENDPOINTS.ADMIN.PATHS, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        mode: 'cors',
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch paths');
+      if (!token) {
+        console.error('No authentication token found');
+        setError('Authentication error: No token found. Please log in again.');
+        return;
       }
       
-      const data = await response.json();
-      console.log('Paths data received:', data);
+      console.log('Fetching paths with token:', token ? `${token.substring(0, 10)}...` : 'null');
       
-      // La risposta è in formato {paths: [...], total: n}
-      if (data.paths && Array.isArray(data.paths)) {
-        setPaths(data.paths);
-      } else if (Array.isArray(data)) {
-        setPaths(data);
-      } else if (data.items && Array.isArray(data.items)) {
-        setPaths(data.items);
-      } else {
-        console.error('Unexpected paths data format:', data);
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.PATHS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
+      
+      xhr.onload = function() {
+        console.log('Paths response status:', xhr.status);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('Paths data received:', data);
+            
+            // La risposta è in formato {paths: [...], total: n}
+            if (data.paths && Array.isArray(data.paths)) {
+              console.log('Setting paths from data.paths with', data.paths.length, 'items');
+              setPaths(data.paths);
+            } else if (Array.isArray(data)) {
+              console.log('Setting paths array with', data.length, 'items');
+              setPaths(data);
+            } else if (data.items && Array.isArray(data.items)) {
+              setPaths(data.items);
+            } else {
+              console.error('Unexpected paths data format:', data);
+              setPaths([]);
+            }
+          } catch (e) {
+            console.error('Error parsing JSON from paths endpoint:', e);
+            setError('Error parsing paths data');
+            setPaths([]);
+          }
+        } else {
+          console.error(`Failed to fetch paths: ${xhr.status} ${xhr.statusText}`);
+          setError(`Failed to fetch paths: ${xhr.status} ${xhr.statusText}`);
+          setPaths([]);
+        }
+      };
+      
+      xhr.onerror = function() {
+        console.error('Network error occurred while fetching paths');
+        setError('Network error occurred while fetching paths');
         setPaths([]);
-      }
+      };
+      
+      xhr.send();
     } catch (error) {
       console.error('Error fetching paths:', error);
       setError('Error fetching paths: ' + error.message);
