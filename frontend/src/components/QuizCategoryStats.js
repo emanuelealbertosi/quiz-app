@@ -28,30 +28,50 @@ const QuizCategoryStats = ({ token }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCategoryStats = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(ENDPOINTS.ADMIN.QUIZ_CATEGORIES_STATS, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch category statistics');
-        }
-        
-        const data = await response.json();
-        setStats(data);
-        setError(null);
-      } catch (error) {
-        console.error('Error fetching category statistics:', error);
-        setError('Error fetching category statistics: ' + error.message);
-      } finally {
+    const fetchCategoryStats = () => {
+      if (!token) {
+        setError('Authentication error: No token found');
         setLoading(false);
+        return;
       }
+      
+      setLoading(true);
+      console.log('Fetching category stats with token:', token ? `${token.substring(0, 10)}...` : 'null');
+      
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.QUIZ_CATEGORIES_STATS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
+      
+      xhr.onload = function() {
+        console.log('Category stats response status:', xhr.status);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('Category stats data received:', data);
+            setStats(data);
+            setError(null);
+          } catch (e) {
+            console.error('Error parsing JSON from category stats endpoint:', e);
+            setError('Error parsing category statistics data');
+          }
+        } else {
+          console.error(`Failed to fetch category statistics: ${xhr.status} ${xhr.statusText}`);
+          setError(`Failed to fetch category statistics: ${xhr.status} ${xhr.statusText}`);
+        }
+        setLoading(false);
+      };
+      
+      xhr.onerror = function() {
+        console.error('Network error occurred while fetching category statistics');
+        setError('Network error occurred while fetching category statistics');
+        setLoading(false);
+      };
+      
+      xhr.send();
     };
 
     fetchCategoryStats();

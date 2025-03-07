@@ -109,24 +109,47 @@ const QuizManagement = ({ token }) => {
   };
 
   // Fetch difficulty levels for the select dropdown
-  const fetchDifficultyLevels = async () => {
-    try {
-      const response = await fetch(ENDPOINTS.ADMIN.DIFFICULTY_LEVELS, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch difficulty levels');
-      }
-
-      const data = await response.json();
-      setDifficultyLevels(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error fetching difficulty levels:', error);
-      setError(`Error fetching difficulty levels: ${error.message}`);
+  const fetchDifficultyLevels = () => {
+    if (!token) {
+      console.error('No authentication token found');
+      setError('Authentication error: No token found. Please log in again.');
+      return;
     }
+    
+    console.log('QuizManagement: Fetching difficulty levels with token:', token ? `${token.substring(0, 10)}...` : 'null');
+    
+    // Using XMLHttpRequest instead of fetch for better compatibility
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', ENDPOINTS.ADMIN.DIFFICULTY_LEVELS, true);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
+    
+    xhr.onload = function() {
+      console.log('QuizManagement: Difficulty levels response status:', xhr.status);
+      
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          console.log('QuizManagement: Difficulty levels data received:', data);
+          setDifficultyLevels(Array.isArray(data) ? data : []);
+          setError(null);
+        } catch (e) {
+          console.error('Error parsing JSON from difficulty levels endpoint:', e);
+          setError('Error parsing difficulty levels data');
+        }
+      } else {
+        console.error(`Failed to fetch difficulty levels: ${xhr.status} ${xhr.statusText}`);
+        setError(`Error fetching difficulty levels: ${xhr.status} ${xhr.statusText}`);
+      }
+    };
+    
+    xhr.onerror = function() {
+      console.error('Network error occurred while fetching difficulty levels');
+      setError('Network error occurred while fetching difficulty levels');
+    };
+    
+    xhr.send();
   };
 
   // Open dialog for adding a new quiz

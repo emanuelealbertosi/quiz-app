@@ -25,30 +25,50 @@ const QuizStats = ({ token }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchQuizStats = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(ENDPOINTS.ADMIN.STATS, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch quiz statistics');
-        }
-        
-        const data = await response.json();
-        setStats(data);
-        setError(null);
-      } catch (error) {
-        console.error('Error fetching quiz statistics:', error);
-        setError('Error fetching quiz statistics: ' + error.message);
-      } finally {
+    const fetchQuizStats = () => {
+      if (!token) {
+        setError('Authentication error: No token found');
         setLoading(false);
+        return;
       }
+      
+      setLoading(true);
+      console.log('Fetching quiz stats with token:', token ? `${token.substring(0, 10)}...` : 'null');
+      
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.STATS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
+      
+      xhr.onload = function() {
+        console.log('Quiz stats response status:', xhr.status);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('Quiz stats data received:', data);
+            setStats(data);
+            setError(null);
+          } catch (e) {
+            console.error('Error parsing JSON from quiz stats endpoint:', e);
+            setError('Error parsing quiz statistics data');
+          }
+        } else {
+          console.error(`Failed to fetch quiz statistics: ${xhr.status} ${xhr.statusText}`);
+          setError(`Failed to fetch quiz statistics: ${xhr.status} ${xhr.statusText}`);
+        }
+        setLoading(false);
+      };
+      
+      xhr.onerror = function() {
+        console.error('Network error occurred while fetching quiz statistics');
+        setError('Network error occurred while fetching quiz statistics');
+        setLoading(false);
+      };
+      
+      xhr.send();
     };
 
     fetchQuizStats();

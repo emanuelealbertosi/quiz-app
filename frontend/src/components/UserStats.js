@@ -24,30 +24,50 @@ const UserStats = ({ token }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(ENDPOINTS.ADMIN.USERS_STATS, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch user statistics');
-        }
-        
-        const data = await response.json();
-        setStats(data);
-        setError(null);
-      } catch (error) {
-        console.error('Error fetching user statistics:', error);
-        setError('Error fetching user statistics: ' + error.message);
-      } finally {
+    const fetchUserStats = () => {
+      if (!token) {
+        setError('Authentication error: No token found');
         setLoading(false);
+        return;
       }
+      
+      setLoading(true);
+      console.log('Fetching user stats with token:', token ? `${token.substring(0, 10)}...` : 'null');
+      
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.USERS_STATS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
+      
+      xhr.onload = function() {
+        console.log('User stats response status:', xhr.status);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('User stats data received:', data);
+            setStats(data);
+            setError(null);
+          } catch (e) {
+            console.error('Error parsing JSON from user stats endpoint:', e);
+            setError('Error parsing user statistics data');
+          }
+        } else {
+          console.error(`Failed to fetch user statistics: ${xhr.status} ${xhr.statusText}`);
+          setError(`Failed to fetch user statistics: ${xhr.status} ${xhr.statusText}`);
+        }
+        setLoading(false);
+      };
+      
+      xhr.onerror = function() {
+        console.error('Network error occurred while fetching user statistics');
+        setError('Network error occurred while fetching user statistics');
+        setLoading(false);
+      };
+      
+      xhr.send();
     };
 
     fetchUserStats();

@@ -30,37 +30,53 @@ const DifficultyStats = ({ token }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
-        // Fetch difficulty levels
-        const difficultyResponse = await fetch(ENDPOINTS.ADMIN.DIFFICULTY_LEVELS, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
-        });
-        
-        if (!difficultyResponse.ok) {
-          throw new Error('Failed to fetch difficulty levels');
+        if (!token) {
+          throw new Error('No authentication token found');
         }
         
-        const difficultyData = await difficultyResponse.json();
+        let difficultyData = [];
+        let statsData = {};
+        
+        // Definire una funzione asincrona per usare le Promise con XHR
+        const fetchWithXHR = (url) => {
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.withCredentials = false; // Disabilitato per prevenire problemi di CORS preflight
+            
+            xhr.onload = function() {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  resolve(data);
+                } catch (e) {
+                  reject(new Error(`Error parsing JSON: ${e.message}`));
+                }
+              } else {
+                reject(new Error(`Request failed with status: ${xhr.status}`));
+              }
+            };
+            
+            xhr.onerror = function() {
+              reject(new Error('Network error occurred'));
+            };
+            
+            xhr.send();
+          });
+        };
+        
+        // Fetch difficulty levels
+        console.log('Fetching difficulty levels with token', token ? `${token.substring(0, 10)}...` : 'null');
+        difficultyData = await fetchWithXHR(ENDPOINTS.ADMIN.DIFFICULTY_LEVELS);
+        console.log('Difficulty levels received:', difficultyData);
         setDifficultyLevels(difficultyData);
         
         // Fetch quiz stats
-        const statsResponse = await fetch(ENDPOINTS.ADMIN.STATS, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
-        });
-        
-        if (!statsResponse.ok) {
-          throw new Error('Failed to fetch quiz statistics');
-        }
-        
-        const statsData = await statsResponse.json();
+        console.log('Fetching quiz stats');
+        statsData = await fetchWithXHR(ENDPOINTS.ADMIN.STATS);
+        console.log('Quiz stats received:', statsData);
         setStats(statsData);
         
         setError(null);
