@@ -1,7 +1,7 @@
 // Configuration file for the application
 
 // API URLs
-const API_BASE_URL = 'http://localhost:8888';
+const API_BASE_URL = 'http://localhost:9999';
 
 // API Endpoints
 const ENDPOINTS = {
