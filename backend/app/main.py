@@ -17,13 +17,21 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Configure CORS - Allow all origins for development
+# Configure CORS for development and production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily for debugging
+    allow_origins=[
+        "http://localhost:3000",  # React dev server
+        "http://localhost:8888",  # Backend API
+        "http://localhost",      # Generic localhost
+        "http://127.0.0.1:3000", # Alternative for localhost
+        "http://127.0.0.1:8888", # Alternative for localhost
+        "http://127.0.0.1",     # Generic IP
+    ],  
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"]
 )
 
 # Include routers

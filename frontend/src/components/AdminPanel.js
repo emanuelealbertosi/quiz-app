@@ -187,14 +187,16 @@ const AdminPanel = ({ token }) => {
     try {
       const response = await fetch(ENDPOINTS.ADMIN.STATS, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         mode: 'cors',
-        credentials: 'include'
+        credentials: 'same-origin'
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch system stats');
+        throw new Error(`Failed to fetch system stats: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
