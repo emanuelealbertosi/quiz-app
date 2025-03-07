@@ -185,22 +185,33 @@ const AdminPanel = ({ token }) => {
   // Funzione per caricare le statistiche di sistema
   const fetchStats = useCallback(async () => {
     try {
-      const response = await fetch(ENDPOINTS.ADMIN.STATS, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        mode: 'cors',
-        credentials: 'same-origin'
-      });
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.STATS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch system stats: ${response.status} ${response.statusText}`);
-      }
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            setStats(data);
+            setError(null);
+          } catch (e) {
+            console.error('Error parsing JSON:', e);
+            setError('Error parsing system stats data');
+          }
+        } else {
+          setError(`Failed to fetch system stats: ${xhr.status} ${xhr.statusText}`);
+        }
+      };
       
-      const data = await response.json();
-      setStats(data);
+      xhr.onerror = function() {
+        setError('Network error occurred while fetching system stats');
+      };
+      
+      xhr.send();
     } catch (error) {
       console.error('Error fetching system stats:', error);
       setError('Error fetching system stats: ' + error.message);
@@ -218,40 +229,54 @@ const AdminPanel = ({ token }) => {
       
       console.log('Fetching users with token:', token ? `${token.substring(0, 10)}...` : 'null');
       
-      const response = await fetch(ENDPOINTS.ADMIN.USERS, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        },
-        mode: 'cors',
-        credentials: 'include'
-      });
+      // Using XMLHttpRequest instead of fetch for better compatibility
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', ENDPOINTS.ADMIN.USERS, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.withCredentials = false; // Set to false to prevent CORS preflight issues
       
-      console.log('Users response status:', response.status);
-      
-      if (!response.ok) {
-        let errorMessage = 'Failed to fetch users';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorMessage;
-        } catch (e) {
-          console.error('Error parsing error response:', e);
+      xhr.onload = function() {
+        console.log('Users response status:', xhr.status);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('Users data received:', data);
+            
+            if (data.users && Array.isArray(data.users)) {
+              setUsers(data.users);
+            } else if (Array.isArray(data)) {
+              setUsers(data);
+            } else {
+              console.error('Unexpected users data format:', data);
+              setUsers([]);
+            }
+            setError(null);
+          } catch (e) {
+            console.error('Error parsing JSON:', e);
+            setError('Error parsing users data');
+          }
+        } else {
+          let errorMessage = `Failed to fetch users: ${xhr.status} ${xhr.statusText}`;
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch (e) {
+            console.error('Error parsing error response:', e);
+          }
+          console.error(errorMessage);
+          setError(errorMessage);
         }
-        throw new Error(errorMessage);
-      }
+      };
       
-      const data = await response.json();
-      console.log('Users data received:', data);
+      xhr.onerror = function() {
+        setError('Network error occurred while fetching users');
+      };
       
-      if (data.users && Array.isArray(data.users)) {
-        setUsers(data.users);
-      } else if (Array.isArray(data)) {
-        setUsers(data);
-      } else {
-        console.error('Unexpected users data format:', data);
-        setUsers([]);
-      }
+      xhr.send();
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('Error fetching users: ' + error.message);
