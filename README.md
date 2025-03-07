@@ -42,22 +42,68 @@ Un'applicazione web interattiva che permette agli studenti di esercitarsi con qu
 
 ### Opzione 1: Avvio con Docker (consigliato)
 
-Questo metodo avvia automaticamente backend, frontend e database in un ambiente isolato:
+Questo metodo avvia automaticamente backend, frontend e database in un ambiente isolato.
+
+#### Installazione completa
 
 ```bash
-# Avvio dell'intera applicazione
+# 1. Clonare il repository se non l'hai già fatto
+git clone https://github.com/emanuelealbertosi/quiz-app.git
+cd quiz-app
+
+# 2. Costruire i container Docker
+sudo docker-compose build
+
+# 3. Avviare l'applicazione
 sudo docker-compose up -d
 
-# Per visualizzare i log
+# L'applicazione sarà disponibile su:
+# - Frontend: http://localhost:3001
+# - Backend API: http://localhost:9999
+```
+
+#### Comandi Docker utili
+
+```bash
+# Visualizzare lo stato dei container
+sudo docker-compose ps
+
+# Visualizzare i log (in tempo reale)
 sudo docker-compose logs -f
 
-# Per fermare l'applicazione
+# Visualizzare i log di un servizio specifico
+sudo docker-compose logs backend
+sudo docker-compose logs frontend
+
+# Fermare l'applicazione mantenendo i dati
+sudo docker-compose stop
+
+# Riavviare l'applicazione dopo uno stop
+sudo docker-compose start
+
+# Fermare e rimuovere i container (i dati del database rimangono persistenti)
 sudo docker-compose down
 
-# Per ricostruire i container (dopo modifiche ai file di configurazione)
+# Fermare e rimuovere i container E i volumi (CANCELLA tutti i dati del database)
+sudo docker-compose down -v
+
+# Ricostruire i container dopo modifiche ai file di configurazione
 sudo docker-compose build
 sudo docker-compose up -d
 ```
+
+#### Accesso al database tramite pgAdmin
+
+Dopo l'avvio, puoi accedere all'interfaccia di pgAdmin:
+1. Apri http://localhost:5051 nel browser
+2. Login con email: admin@example.com, password: admin
+3. Aggiungere un nuovo server:
+   - Nome: quiz_app_db
+   - Host: db
+   - Porta: 5432
+   - Database: quiz_app
+   - Utente: postgres
+   - Password: password
 
 **Nota**: Potrebbe essere necessario utilizzare `sudo` per i comandi Docker a seconda della configurazione del sistema.
 
@@ -152,3 +198,31 @@ Se riscontri errori di permessi nei container Docker:
 
 1. Esegui i comandi Docker con `sudo`
 2. Se stai modificando file all'interno dei container, assicurati che abbiano i permessi corretti
+
+### Docker: Riferimento Rapido
+
+```bash
+# Riavvio completo dell'applicazione (stop, build, start)
+sudo docker-compose down && sudo docker-compose build && sudo docker-compose up -d
+
+# Visualizzare tutti i container (anche quelli non attivi)
+sudo docker ps -a
+
+# Visualizzare tutte le immagini Docker
+sudo docker images
+
+# Eliminare immagini non utilizzate (pulizia)
+sudo docker image prune -a
+
+# Entrare in un container attivo (per debug)
+sudo docker exec -it quiz_app_backend_1 /bin/bash
+sudo docker exec -it quiz_app_frontend_1 /bin/sh
+
+# Controllare i log di un servizio specifico (ultimi 100 log)
+sudo docker-compose logs --tail=100 backend
+
+# Monitorare l'utilizzo delle risorse dei container
+sudo docker stats
+```
+
+Questi comandi ti aiuteranno a gestire e risolvere rapidamente i problemi più comuni dell'applicazione in Docker.
