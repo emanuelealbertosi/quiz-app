@@ -22,11 +22,16 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # React dev server
+        "http://localhost:3001",  # Docker frontend port
         "http://localhost:8888",  # Backend API
+        "http://localhost:9999",  # Docker backend port
         "http://localhost",      # Generic localhost
         "http://127.0.0.1:3000", # Alternative for localhost
+        "http://127.0.0.1:3001", # Alternative for Docker frontend
         "http://127.0.0.1:8888", # Alternative for localhost
+        "http://127.0.0.1:9999", # Alternative for Docker backend
         "http://127.0.0.1",     # Generic IP
+        "*",                    # Allow all origins for testing
     ],  
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],

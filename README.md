@@ -201,6 +201,45 @@ echo "export COMPOSE_HTTP_TIMEOUT=300" >> ~/.bashrc
 source ~/.bashrc
 ```
 
+#### Errori di rete durante il login (NetworkError)
+Se riscontri un errore "NetworkError when attempting to fetch resource" durante il login:
+
+1. **Verifica che tutti i servizi siano attivi**:
+   ```bash
+   sudo docker-compose ps
+   ```
+   Tutti i servizi dovrebbero essere nello stato "Up".
+
+2. **Verifica i log del backend**:
+   ```bash
+   sudo docker-compose logs backend
+   ```
+   Cerca eventuali errori relativi all'autenticazione o alle richieste API.
+
+3. **Inizializza il database se è la prima esecuzione**:
+   ```bash
+   sudo docker-compose exec backend python seed_db.py
+   ```
+   Questo creerà l'utente admin di default e i dati iniziali.
+
+4. **Riavvia i container e prova ad accedere con credenziali corrette**:
+   ```bash
+   sudo docker-compose restart frontend backend
+   ```
+   Quindi visita http://localhost:3001 e accedi con:
+   - Email: admin@example.com
+   - Password: password
+
+5. **Disabilita eventuali estensioni del browser che potrebbero bloccare le richieste**.
+
+6. **Se tutto il resto fallisce, prova una soluzione più drastica**:
+   ```bash
+   sudo docker-compose down
+   sudo docker-compose build --no-cache
+   sudo docker-compose up -d
+   sudo docker-compose exec backend python seed_db.py
+   ```
+
 #### Problemi con l'interfaccia utente
 Se riscontri problemi con la visualizzazione delle domande dei quiz:
 

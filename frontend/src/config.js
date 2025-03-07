@@ -1,6 +1,7 @@
 // Configuration file for the application
 
 // API URLs
+// In the browser environment we need to use the host URL, not the Docker service name
 const API_BASE_URL = 'http://localhost:9999';
 
 // API Endpoints

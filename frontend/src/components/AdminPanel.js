@@ -114,16 +114,24 @@ const AdminPanel = ({ token }) => {
   // Funzione per caricare i livelli di difficoltà
   const fetchDifficultyLevels = useCallback(async () => {
     try {
+      console.log('Fetching difficulty levels with token:', token);
+      
+      // Debug only: Prova a fare una richiesta diretta senza credentials
+      console.log('Tentativo con richiesta semplificata...');
       const response = await fetch(ENDPOINTS.ADMIN.DIFFICULTY_LEVELS, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        mode: 'cors',
-        credentials: 'include'
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', [...response.headers.entries()]);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch difficulty levels');
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`Failed to fetch difficulty levels: ${response.status} ${errorText}`);
       }
       
       const data = await response.json();
@@ -131,8 +139,10 @@ const AdminPanel = ({ token }) => {
       
       // Assicuriamoci che difficultyLevels sia sempre un array
       if (Array.isArray(data)) {
+        console.log('Setting difficulty levels array with', data.length, 'items');
         setDifficultyLevels(data);
       } else if (data.items && Array.isArray(data.items)) {
+        console.log('Setting difficulty levels from data.items with', data.items.length, 'items');
         setDifficultyLevels(data.items);
       } else {
         console.error('Unexpected difficulty levels data format:', data);
