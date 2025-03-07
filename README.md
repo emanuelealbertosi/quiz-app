@@ -178,6 +178,29 @@ python seed_db.py
 
 ### Risoluzione dei problemi
 
+#### Errori di timeout Docker
+Se riscontri errori come questo durante l'avvio con Docker Compose:
+```
+ERROR: for quiz_app_frontend_1  UnixHTTPConnectionPool(host='localhost', port=None): Read timed out. (read timeout=60)
+ERROR: An HTTP request took too long to complete.
+```
+
+È necessario aumentare il timeout HTTP di Docker Compose:
+
+```bash
+# Imposta un timeout più lungo (es. 300 secondi invece di 60)
+export COMPOSE_HTTP_TIMEOUT=300
+
+# Quindi riprova il comando che stavi eseguendo
+sudo docker-compose up -d
+```
+
+Puoi anche aggiungere questa impostazione al tuo file `~/.bashrc` per renderla permanente:
+```bash
+echo "export COMPOSE_HTTP_TIMEOUT=300" >> ~/.bashrc
+source ~/.bashrc
+```
+
 #### Problemi con l'interfaccia utente
 Se riscontri problemi con la visualizzazione delle domande dei quiz:
 
