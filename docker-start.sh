@@ -19,9 +19,9 @@ start_dev() {
     sudo docker-compose up -d
     
     echo -e "${GREEN}Services started:${NC}"
-    echo -e "  - Frontend: http://localhost:3000"
-    echo -e "  - Backend API: http://localhost:8001"
-    echo -e "  - PgAdmin: http://localhost:5050"
+    echo -e "  - Frontend: http://localhost:3001"
+    echo -e "  - Backend API: http://localhost:9999"
+    echo -e "  - PgAdmin: http://localhost:5051"
     echo -e "    (email: admin@example.com, password: admin)"
 }
 
@@ -32,8 +32,8 @@ start_prod() {
     
     echo -e "${GREEN}Services started:${NC}"
     echo -e "  - Frontend: http://localhost"
-    echo -e "  - Backend API: http://localhost:8001"
-    echo -e "  - PgAdmin: http://localhost:5050"
+    echo -e "  - Backend API: http://localhost:9999"
+    echo -e "  - PgAdmin: http://localhost:5051"
     echo -e "    (email: admin@example.com, password: admin)"
 }
 

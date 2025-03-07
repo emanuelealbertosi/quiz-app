@@ -58,16 +58,16 @@ docker-compose -f docker-compose.prod.yml down
 ## Accesso ai Servizi
 
 ### Ambiente di Sviluppo
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8001
-- Documentazione API: http://localhost:8001/docs
-- PgAdmin: http://localhost:5050 (email: admin@example.com, password: admin)
+- Frontend: http://localhost:3001
+- Backend API: http://localhost:9999
+- Documentazione API: http://localhost:9999/docs
+- PgAdmin: http://localhost:5051 (email: admin@example.com, password: admin)
 
 ### Ambiente di Produzione
 - Frontend: http://localhost
-- Backend API: http://localhost:8001
-- Documentazione API: http://localhost:8001/docs
-- PgAdmin: http://localhost:5050 (email: admin@example.com, password: admin)
+- Backend API: http://localhost:9999
+- Documentazione API: http://localhost:9999/docs
+- PgAdmin: http://localhost:5051 (email: admin@example.com, password: admin)
 
 ## Struttura dei File Docker
 
