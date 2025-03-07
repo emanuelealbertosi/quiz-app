@@ -678,14 +678,22 @@ const AdminPanel = ({ token }) => {
         
       const method = dialogMode === 'add' ? 'POST' : 'PUT';
       
+      console.log('Saving difficulty level:', {
+        url,
+        method,
+        token,
+        data: {
+          name: currentDifficulty.name,
+          value: parseInt(currentDifficulty.value)
+        }
+      });
+      
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        mode: 'cors',
-        credentials: 'include',
         body: JSON.stringify({
           name: currentDifficulty.name,
           value: parseInt(currentDifficulty.value)
@@ -708,13 +716,14 @@ const AdminPanel = ({ token }) => {
   const handleDeleteDifficulty = useCallback(async (id) => {
     if (window.confirm('Are you sure you want to delete this difficulty level?')) {
       try {
+        console.log('Deleting difficulty level:', id);
+        
         const response = await fetch(`${ENDPOINTS.ADMIN.DIFFICULTY_LEVELS}/${id}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
         
         if (!response.ok) {
@@ -753,14 +762,22 @@ const AdminPanel = ({ token }) => {
         
       const method = dialogMode === 'add' ? 'POST' : 'PUT';
       
+      console.log('Saving path:', {
+        url,
+        method,
+        token,
+        data: {
+          name: currentPath.name,
+          description: currentPath.description
+        }
+      });
+      
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        mode: 'cors',
-        credentials: 'include',
         body: JSON.stringify({
           name: currentPath.name,
           description: currentPath.description
@@ -783,13 +800,14 @@ const AdminPanel = ({ token }) => {
   const handleDeletePath = useCallback(async (id) => {
     if (window.confirm('Are you sure you want to delete this path?')) {
       try {
+        console.log('Deleting path:', id);
+        
         const response = await fetch(`${ENDPOINTS.ADMIN.PATHS}/${id}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          mode: 'cors',
-          credentials: 'include'
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
         
         if (!response.ok) {
