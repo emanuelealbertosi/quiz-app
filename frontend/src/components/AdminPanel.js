@@ -40,7 +40,7 @@ import UserStats from './UserStats';
 import QuizCategoryStats from './QuizCategoryStats';
 import QuizStats from './QuizStats';
 import DifficultyStats from './DifficultyStats';
-//import QuizManagement from './QuizManagement';
+import QuizManagement from './QuizManagement';
 
 // Componente TabPanel per gestire il contenuto delle tab
 function TabPanel(props) {
@@ -1113,7 +1113,7 @@ const AdminPanel = ({ token }) => {
 
             {/* Quiz Management Tab */}
             <TabPanel value={value} index={5}>
-              <Typography>Quiz Management temporaneamente disabilitato</Typography>
+              <QuizManagement token={token} />
             </TabPanel>
             
             {/* User Stats Tab */}
