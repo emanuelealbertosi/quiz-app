@@ -17,32 +17,46 @@ function Dashboard() {
     }
   }, []);
 
-  const fetchUserInfo = async (token) => {
-    try {
-      const response = await fetch(ENDPOINTS.ME, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        mode: 'cors',
-        credentials: 'same-origin'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUserInfo(data);
-        
-        // Check if the user has the admin role
-        const isUserAdmin = data.role === 'admin';
-        setIsAdmin(isUserAdmin);
-      } else {
-        console.error('Failed to fetch user info:', await response.text());
-      }
-    } catch (error) {
-      console.error('Error fetching user info:', error);
+  const fetchUserInfo = (token) => {
+    if (!token) {
+      console.error('No token provided for user info fetch');
+      return;
     }
+    
+    console.log('Dashboard: Fetching user info with token:', token ? `${token.substring(0, 10)}...` : 'null');
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', ENDPOINTS.ME, true);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.withCredentials = false; // Disabilitato per evitare problemi CORS preflight
+    
+    xhr.onload = function() {
+      console.log('Dashboard: User info response status:', xhr.status);
+      
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          console.log('Dashboard: User info data received:', data);
+          setUserInfo(data);
+          
+          // Check if the user has the admin role
+          const isUserAdmin = data.role === 'admin';
+          setIsAdmin(isUserAdmin);
+        } catch (e) {
+          console.error('Error parsing user info JSON:', e);
+        }
+      } else {
+        console.error(`Failed to fetch user info: ${xhr.status} ${xhr.statusText}`);
+      }
+    };
+    
+    xhr.onerror = function() {
+      console.error('Network error occurred while fetching user info');
+    };
+    
+    xhr.send();
   };
 
 
