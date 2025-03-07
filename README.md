@@ -46,14 +46,20 @@ Questo metodo avvia automaticamente backend, frontend e database in un ambiente 
 
 ```bash
 # Avvio dell'intera applicazione
-docker-compose up -d
+sudo docker-compose up -d
 
 # Per visualizzare i log
-docker-compose logs -f
+sudo docker-compose logs -f
 
 # Per fermare l'applicazione
-docker-compose down
+sudo docker-compose down
+
+# Per ricostruire i container (dopo modifiche ai file di configurazione)
+sudo docker-compose build
+sudo docker-compose up -d
 ```
+
+**Nota**: Potrebbe essere necessario utilizzare `sudo` per i comandi Docker a seconda della configurazione del sistema.
 
 ### Opzione 2: Installazione e avvio manuale
 
@@ -90,7 +96,7 @@ export SECRET_KEY="your_secret_key_here"
 export ENVIRONMENT="development"
 
 # Avvio del backend
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8888 --reload
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 9999 --reload
 ```
 
 Nota: L'ambiente virtuale necessario è già configurato nella cartella `backend/venv`. Se hai bisogno di aggiornare le dipendenze, puoi eseguire `pip install -r requirements.txt` all'interno dell'ambiente virtuale.
@@ -110,10 +116,10 @@ npm start
 
 Dopo l'avvio, puoi accedere all'applicazione ai seguenti indirizzi:
 
-- **Frontend**: http://localhost:3000
-- **API Backend**: http://localhost:8001
-- **Documentazione API**: http://localhost:8001/docs
-- **PgAdmin** (se avviato con Docker): http://localhost:5050 (email: admin@example.com, password: admin)
+- **Frontend**: http://localhost:3001
+- **API Backend**: http://localhost:9999
+- **Documentazione API**: http://localhost:9999/docs
+- **PgAdmin** (se avviato con Docker): http://localhost:5051 (email: admin@example.com, password: admin)
 
 ### Importazione di dati di esempio
 
@@ -126,8 +132,23 @@ python seed_db.py
 
 ### Risoluzione dei problemi
 
+#### Problemi con l'interfaccia utente
 Se riscontri problemi con la visualizzazione delle domande dei quiz:
 
 1. Verifica che l'API backend stia restituendo correttamente il formato delle opzioni (array `options` anziché campi separati)
 2. Assicurati che il frontend stia interpretando correttamente le risposte API
 3. Controlla i log del backend e del frontend per eventuali errori
+
+#### Problemi di connessione in Docker
+Se riscontri errori di connessione come "NetworkError when attempting to fetch resource" quando usi Docker:
+
+1. Verifica che tutti i servizi siano attivi con `sudo docker-compose ps`
+2. Controlla i log del backend e frontend con `sudo docker-compose logs backend` e `sudo docker-compose logs frontend`
+3. Assicurati che il frontend utilizzi l'URL corretto per connettersi al backend (verifica in `frontend/src/config.js`)
+4. Se modifichi file di configurazione, ricostruisci i container con `sudo docker-compose build` seguito da `sudo docker-compose up -d`
+
+#### Problemi di permessi
+Se riscontri errori di permessi nei container Docker:
+
+1. Esegui i comandi Docker con `sudo`
+2. Se stai modificando file all'interno dei container, assicurati che abbiano i permessi corretti
