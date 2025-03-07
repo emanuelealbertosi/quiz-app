@@ -156,13 +156,7 @@ function Dashboard() {
             </Typography>
             <AdminPanel token={token} />
           </Box>
-        ) : (
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="body2" color="text.secondary">
-              Admin panel not shown because you are not an admin. Current role: {userInfo?.role || 'unknown'}
-            </Typography>
-          </Box>
-        )}
+        ) : null}
       </Box>
     </Container>
   );

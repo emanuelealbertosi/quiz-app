@@ -24,7 +24,10 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
+        "http://localhost:3001",
         "http://localhost:8000",
+        "http://localhost:8001",
+        "http://localhost:9999",
         "*",  # Permette richieste da qualsiasi origine durante lo sviluppo
     ]
 

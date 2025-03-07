@@ -106,7 +106,6 @@ const AdminPanel = ({ token }) => {
   const fileInputRef = useRef(null);
   
   // Il token è già passato come prop
-  console.log('AdminPanel receiving token:', token ? `${token.substring(0, 10)}...` : 'null or empty');
   
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -796,7 +795,6 @@ const AdminPanel = ({ token }) => {
     }
   }, [token, fetchPaths]);
 
-  console.log("AdminPanel is rendering", { isAdmin: true, token: token ? `${token.substring(0, 10)}...` : 'null' });
   
   return (
     <Box sx={{ width: '100%' }}>
