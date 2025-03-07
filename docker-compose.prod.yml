@@ -7,7 +7,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/quiz_app
       - SECRET_KEY=your_secret_key_here
@@ -53,4 +53,4 @@ services:
 
 volumes:
   postgres_data:
-    name: quiz_app_postgres_data_prod
+    name: quiz_app_postgres_data_prod_new

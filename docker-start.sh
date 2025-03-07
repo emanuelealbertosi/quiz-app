@@ -16,11 +16,11 @@ echo -e "${BLUE}==============================================${NC}"
 # Function to start development environment
 start_dev() {
     echo -e "${GREEN}Starting development environment...${NC}"
-    docker-compose up -d
+    sudo docker-compose up -d
     
     echo -e "${GREEN}Services started:${NC}"
     echo -e "  - Frontend: http://localhost:3000"
-    echo -e "  - Backend API: http://localhost:8000"
+    echo -e "  - Backend API: http://localhost:8001"
     echo -e "  - PgAdmin: http://localhost:5050"
     echo -e "    (email: admin@example.com, password: admin)"
 }
@@ -28,11 +28,11 @@ start_dev() {
 # Function to start production environment
 start_prod() {
     echo -e "${GREEN}Starting production environment...${NC}"
-    docker-compose -f docker-compose.prod.yml up -d
+    sudo docker-compose -f docker-compose.prod.yml up -d
     
     echo -e "${GREEN}Services started:${NC}"
     echo -e "  - Frontend: http://localhost"
-    echo -e "  - Backend API: http://localhost:8000"
+    echo -e "  - Backend API: http://localhost:8001"
     echo -e "  - PgAdmin: http://localhost:5050"
     echo -e "    (email: admin@example.com, password: admin)"
 }
@@ -41,10 +41,10 @@ start_prod() {
 stop_env() {
     if [ "$1" == "prod" ]; then
         echo -e "${GREEN}Stopping production environment...${NC}"
-        docker-compose -f docker-compose.prod.yml down
+        sudo docker-compose -f docker-compose.prod.yml down
     else
         echo -e "${GREEN}Stopping development environment...${NC}"
-        docker-compose down
+        sudo docker-compose down
     fi
 }
 

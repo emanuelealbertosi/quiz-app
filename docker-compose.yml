@@ -7,7 +7,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       - ./backend:/app
     environment:
@@ -61,4 +61,4 @@ services:
 
 volumes:
   postgres_data:
-    name: quiz_app_postgres_data
+    name: quiz_app_postgres_data_new
