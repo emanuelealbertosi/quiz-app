@@ -90,10 +90,10 @@ export SECRET_KEY="your_secret_key_here"
 export ENVIRONMENT="development"
 
 # Avvio del backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8888 --reload
 ```
 
-Nota: L'ambiente virtuale è già configurato con tutte le dipendenze necessarie. Se hai bisogno di aggiornare le dipendenze, puoi eseguire `pip install -r requirements.txt` all'interno dell'ambiente virtuale.
+Nota: L'ambiente virtuale necessario è già configurato nella cartella `backend/venv`. Se hai bisogno di aggiornare le dipendenze, puoi eseguire `pip install -r requirements.txt` all'interno dell'ambiente virtuale.
 
 #### 3. Configurazione e avvio del frontend
 
