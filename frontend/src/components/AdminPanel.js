@@ -39,6 +39,7 @@ import { ENDPOINTS } from '../config';
 import UserStats from './UserStats';
 import QuizCategoryStats from './QuizCategoryStats';
 import QuizStats from './QuizStats';
+import RewardManagement from './RewardManagement';
 import DifficultyStats from './DifficultyStats';
 import QuizManagement from './QuizManagement';
 
@@ -586,10 +587,11 @@ const AdminPanel = ({ token }) => {
       const response = await fetch(ENDPOINTS.ADMIN.USER_DETAIL(userId), {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         mode: 'cors',
-        credentials: 'include'
+        credentials: 'same-origin'
       });
       
       if (!response.ok) {
@@ -875,19 +877,53 @@ const AdminPanel = ({ token }) => {
   return (
     <Box sx={{ width: '100%' }}>
       <Paper elevation={3}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={value} onChange={handleChange} aria-label="admin tabs">
-            <Tab label="Difficulty Levels" {...a11yProps(0)} />
-            <Tab label="Quiz Paths" {...a11yProps(1)} />
-            <Tab label="System Stats" {...a11yProps(2)} />
-            <Tab label="Users" {...a11yProps(3)} />
-            <Tab label="Import Quiz" {...a11yProps(4)} />
-            <Tab label="Quiz Management" icon={<QuizIcon />} iconPosition="start" {...a11yProps(5)} />
-            <Tab label="User Stats" icon={<BarChartIcon />} iconPosition="start" {...a11yProps(6)} />
-            <Tab label="Quiz Categories" icon={<CategoryIcon />} iconPosition="start" {...a11yProps(7)} />
-            <Tab label="Quiz Stats" icon={<QuizIcon />} iconPosition="start" {...a11yProps(8)} />
-            <Tab label="Difficulty Stats" icon={<SpeedIcon />} iconPosition="start" {...a11yProps(9)} />
-          </Tabs>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center' }}>
+          <IconButton
+            onClick={() => {
+              const tabsContainer = document.querySelector('.MuiTabs-flexContainer');
+              if (tabsContainer && tabsContainer.parentElement) {
+                tabsContainer.parentElement.scrollBy({ left: -300, behavior: 'smooth' });
+              }
+            }}
+            sx={{ minWidth: 40, zIndex: 10 }}
+          >
+            <i className="material-icons">keyboard_arrow_left</i>
+          </IconButton>
+          
+          <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+            <Tabs 
+              value={value} 
+              onChange={handleChange} 
+              aria-label="admin tabs"
+              variant="scrollable"
+              scrollButtons={false}
+              sx={{ overflowX: 'hidden' }}
+            >
+              <Tab label="Difficulty Levels" {...a11yProps(0)} />
+              <Tab label="Quiz Paths" {...a11yProps(1)} />
+              <Tab label="System Stats" {...a11yProps(2)} />
+              <Tab label="Users" {...a11yProps(3)} />
+              <Tab label="Import Quiz" {...a11yProps(4)} />
+              <Tab label="Quiz Management" icon={<QuizIcon />} iconPosition="start" {...a11yProps(5)} />
+              <Tab label="User Stats" icon={<BarChartIcon />} iconPosition="start" {...a11yProps(6)} />
+              <Tab label="Quiz Categories" icon={<CategoryIcon />} iconPosition="start" {...a11yProps(7)} />
+              <Tab label="Quiz Stats" icon={<QuizIcon />} iconPosition="start" {...a11yProps(8)} />
+              <Tab label="Difficulty Stats" icon={<SpeedIcon />} iconPosition="start" {...a11yProps(9)} />
+              <Tab label="Rewards" icon={<i className="material-icons">card_giftcard</i>} iconPosition="start" {...a11yProps(10)} />
+            </Tabs>
+          </Box>
+          
+          <IconButton
+            onClick={() => {
+              const tabsContainer = document.querySelector('.MuiTabs-flexContainer');
+              if (tabsContainer && tabsContainer.parentElement) {
+                tabsContainer.parentElement.scrollBy({ left: 300, behavior: 'smooth' });
+              }
+            }}
+            sx={{ minWidth: 40, zIndex: 10 }}
+          >
+            <i className="material-icons">keyboard_arrow_right</i>
+          </IconButton>
         </Box>
         
         {error && (
@@ -1208,6 +1244,11 @@ const AdminPanel = ({ token }) => {
             {/* Difficulty Stats Tab */}
             <TabPanel value={value} index={9}>
               <DifficultyStats token={token} />
+            </TabPanel>
+            
+            {/* Rewards Tab */}
+            <TabPanel value={value} index={10}>
+              <RewardManagement token={token} />
             </TabPanel>
           </>
         )}

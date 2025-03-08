@@ -20,6 +20,17 @@ const ENDPOINTS = {
   STUDENT_PROGRESS: `${API_BASE_URL}/api/v1/student/progress`,
   COMPLETED_QUIZZES: `${API_BASE_URL}/api/v1/quizzes/completed-quizzes/`,
   
+  // Reward endpoints
+  REWARDS: `${API_BASE_URL}/api/v1/rewards`,
+  STUDENT: {
+    SHOP: `${API_BASE_URL}/api/v1/student/shop`,
+    PURCHASE: `${API_BASE_URL}/api/v1/student/purchase`,
+    PURCHASES: `${API_BASE_URL}/api/v1/student/purchases`,
+  },
+  PARENT: {
+    STUDENT_SHOP: (studentId) => `${API_BASE_URL}/api/v1/parent/student-shop/${studentId}`,
+  },
+  
   // Admin endpoints
   ADMIN: {
     DIFFICULTY_LEVELS: `${API_BASE_URL}/api/v1/admin/difficulty-levels`,
@@ -35,6 +46,9 @@ const ENDPOINTS = {
     STUDENT_QUIZZES: (userId) => `${API_BASE_URL}/api/v1/admin/users/${userId}/quizzes`,
     CHILDREN_PROGRESS: (userId) => `${API_BASE_URL}/api/v1/admin/users/${userId}/children-progress`,
     QUIZZES_MANAGEMENT: `${API_BASE_URL}/api/v1/quizzes`,
+    SHOP: `${API_BASE_URL}/api/v1/rewards`,
+    PURCHASES: `${API_BASE_URL}/api/v1/admin/purchases`,
+    PURCHASES_UPDATE: (purchaseId) => `${API_BASE_URL}/api/v1/admin/purchases/${purchaseId}`,
   }
 };
 

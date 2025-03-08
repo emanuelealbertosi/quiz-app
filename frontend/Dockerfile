@@ -9,6 +9,9 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# Fix permissions for node user
+RUN mkdir -p /app/node_modules/.cache && chmod -R 777 /app/node_modules/.cache
+
 # Expose port 3000
 EXPOSE 3000
 

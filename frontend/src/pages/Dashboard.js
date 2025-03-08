@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, Button, Divider } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Alert, Button, Divider, Tab, Tabs } from '@mui/material';
 import AdminPanel from '../components/AdminPanel';
+import RewardManagement from '../components/RewardManagement';
+import RewardShop from '../components/RewardShop';
+import ParentRewardManagement from '../components/ParentRewardManagement';
 import { ENDPOINTS } from '../config';
 
 function Dashboard() {
   const [token, setToken] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isParent, setIsParent] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -41,9 +46,11 @@ function Dashboard() {
           console.log('Dashboard: User info data received:', data);
           setUserInfo(data);
           
-          // Check if the user has the admin role
+          // Check user roles
           const isUserAdmin = data.role === 'admin';
+          const isUserParent = data.role === 'parent';
           setIsAdmin(isUserAdmin);
+          setIsParent(isUserParent);
         } catch (e) {
           console.error('Error parsing user info JSON:', e);
         }
@@ -60,6 +67,21 @@ function Dashboard() {
   };
 
 
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  // Handle points update after reward purchase
+  const handlePointsUpdate = (newPointsValue) => {
+    if (userInfo) {
+      setUserInfo({
+        ...userInfo,
+        points: newPointsValue
+      });
+    }
+  };
 
   return (
     <Container maxWidth="lg">
@@ -159,18 +181,76 @@ function Dashboard() {
         </Grid>
 
 
-        {isAdmin ? (
+        {userInfo && userInfo.role === 'student' && (
+          <Box sx={{ mt: 4 }}>
+            <Divider sx={{ mb: 4 }} />
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tab label="Dashboard" />
+                <Tab label="Rewards Shop" />
+              </Tabs>
+            </Box>
+
+            {tabValue === 0 ? (
+              <Typography paragraph>
+                More dashboard content would go here...
+              </Typography>
+            ) : (
+              <RewardShop 
+                token={token} 
+                userPoints={userInfo.points || 0} 
+                onPointsUpdated={handlePointsUpdate} 
+              />
+            )}
+          </Box>
+        )}
+
+        {isParent && (
           <Box sx={{ mt: 4 }}>
             <Divider sx={{ mb: 4 }} />
             <Typography variant="h5" component="h2" gutterBottom>
-              Administration Panel
+              Parent Management
             </Typography>
             <Typography paragraph>
-              As an administrator, you have access to additional features to manage the quiz application.
+              As a parent, you can manage rewards for your children.
             </Typography>
-            <AdminPanel token={token} />
+            <ParentRewardManagement token={token} />
           </Box>
-        ) : null}
+        )}
+
+        {isAdmin && (
+          <Box sx={{ mt: 4 }}>
+            <Divider sx={{ mb: 4 }} />
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tab label="Quiz Management" />
+                <Tab label="Reward Management" />
+              </Tabs>
+            </Box>
+
+            {tabValue === 0 ? (
+              <>
+                <Typography variant="h5" component="h2" gutterBottom>
+                  Administration Panel
+                </Typography>
+                <Typography paragraph>
+                  As an administrator, you have access to additional features to manage the quiz application.
+                </Typography>
+                <AdminPanel token={token} />
+              </>
+            ) : (
+              <>
+                <Typography variant="h5" component="h2" gutterBottom>
+                  Reward Management
+                </Typography>
+                <Typography paragraph>
+                  Manage rewards that students can purchase with their points.
+                </Typography>
+                <RewardManagement token={token} />
+              </>
+            )}
+          </Box>
+        )}
       </Box>
     </Container>
   );

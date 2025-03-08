@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from app.api import auth, users, quizzes, categories, challenges, progress, admin, test
+from app.api import auth, users, quizzes, categories, challenges, progress, admin, test, rewards
 from app.core.config import settings
 from app.db.session import engine, get_db
 from app.models import base
@@ -22,20 +22,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # React dev server
-        "http://localhost:3001",  # Docker frontend port
-        "http://localhost:8888",  # Backend API
-        "http://localhost:9999",  # Docker backend port
-        "http://localhost",      # Generic localhost
-        "http://127.0.0.1:3000", # Alternative for localhost
-        "http://127.0.0.1:3001", # Alternative for Docker frontend
-        "http://127.0.0.1:8888", # Alternative for localhost
-        "http://127.0.0.1:9999", # Alternative for Docker backend
-        "http://127.0.0.1",     # Generic IP
-        "*",                    # Allow all origins for testing
+        "http://localhost:9999",  # Backend API
     ],  
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
+    allow_headers=["Authorization", "Content-Type"],
     expose_headers=["Content-Disposition"]
 )
 
@@ -48,6 +39,7 @@ app.include_router(challenges.router, prefix=f"{settings.API_V1_STR}/challenges"
 app.include_router(progress.router, prefix=f"{settings.API_V1_STR}/progress", tags=["Progress"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["Admin"])
 app.include_router(test.router, prefix=f"{settings.API_V1_STR}/test", tags=["Test"])
+app.include_router(rewards.router, prefix=f"{settings.API_V1_STR}", tags=["Rewards"])
 
 @app.get("/")
 def read_root():
