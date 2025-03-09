@@ -26,17 +26,14 @@ const bounce = keyframes`
 
 // Animazione per il punteggio che sale
 const countUp = keyframes`
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+`;
+
+// Aggiungiamo un'animazione di pulsazione per il punteggio ridotto
+const pulseRed = keyframes`
+  0%, 100% { box-shadow: 0 0 0 rgba(244, 67, 54, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.8); }
 `;
 
 function QuizDetail() {
@@ -161,8 +158,28 @@ function QuizDetail() {
         correct: data.correct, // Nel modello è 'correct' non 'is_correct'
         explanation: quiz.explanation,
         points: data.points_earned,
-        emoji: getRandomEmoji(data.correct) // Aggiunge un'emoji casuale
+        emoji: getRandomEmoji(data.correct), // Aggiunge un'emoji casuale
+        current_quiz_points: data.current_quiz_points // Aggiungiamo il punteggio attuale del quiz
       });
+      
+      // Aggiornare localmente il punteggio del quiz corrente
+      if (data.current_quiz_points !== undefined && data.current_quiz_points !== null) {
+        console.log(`Aggiornamento locale del punteggio del quiz ${quizId} a ${data.current_quiz_points}`);
+        
+        // Creiamo un oggetto per memorizzare il punteggio aggiornato in localStorage
+        const updatedQuizPoints = JSON.parse(localStorage.getItem('updatedQuizPoints') || '{}');
+        updatedQuizPoints[quizId] = data.current_quiz_points;
+        localStorage.setItem('updatedQuizPoints', JSON.stringify(updatedQuizPoints));
+        
+        // Invio di un evento personalizzato per notificare altri componenti dell'aggiornamento
+        const event = new CustomEvent('quizPointsUpdated', {
+          detail: {
+            quizId: parseInt(quizId),
+            points: data.current_quiz_points
+          }
+        });
+        window.dispatchEvent(event);
+      }
       
       // Attiva l'animazione dopo il risultato
       setAnimation(true);
@@ -418,29 +435,51 @@ function QuizDetail() {
                       alignItems: 'center',
                       gap: 2,
                       border: '2px dashed',
-                      borderColor: result.correct ? 'success.main' : 'grey.300',
+                      borderColor: result.correct ? 'success.main' : 'error.main',
                       position: 'relative',
-                      animation: result.correct ? `${countUp} 1.5s ease` : 'none'
+                      animation: result.correct 
+                        ? `${countUp} 1.5s ease` 
+                        : `${pulseRed} 2s infinite`,
                     }}>
                       <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
-                        {result.points === 0 && result.correct ? "Quiz già completato!" : "Punti guadagnati:"}
+                        {result.correct 
+                          ? (result.points === 0 ? "Quiz già completato!" : "Punti guadagnati:") 
+                          : "Punteggio diminuito:"}
                       </Typography>
                       
                       <Typography 
                         variant="h2" 
                         fontWeight="bold" 
-                        color={result.correct ? (result.points > 0 ? "success.main" : "primary.main") : "text.secondary"}
+                        color={result.correct ? (result.points > 0 ? "success.main" : "primary.main") : "error.main"}
                         sx={{ 
                           fontSize: { xs: '3rem', md: '4rem' },
                           textShadow: result.correct ? '0 2px 10px rgba(102,187,106,0.4)' : 'none'
                         }}
                       >
-                        {result.points}
+                        {result.correct ? result.points : `${result.current_quiz_points}/${quiz.points}`}
                       </Typography>
                       
                       {result.correct && result.points === 0 && (
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
                           Hai già completato questo quiz con successo in precedenza!
+                        </Typography>
+                      )}
+                      
+                      {!result.correct && (
+                        <Typography 
+                          variant="body2" 
+                          color="error.main" 
+                          sx={{ 
+                            mt: 1, 
+                            textAlign: 'center',
+                            fontWeight: 'bold',
+                            fontSize: '1rem',
+                            p: 1,
+                            bgcolor: 'rgba(255,0,0,0.1)',
+                            borderRadius: 2
+                          }}
+                        >
+                          Punteggio diminuito: {result.current_quiz_points} di {quiz.points}
                         </Typography>
                       )}
                       
@@ -465,6 +504,23 @@ function QuizDetail() {
                           animationIterationCount: 2
                         }}>
                           +{result.points}!
+                        </Box>
+                      )}
+                      
+                      {!result.correct && (
+                        <Box sx={{
+                          position: 'absolute',
+                          top: -15,
+                          right: -15,
+                          bgcolor: 'error.main',
+                          color: 'white',
+                          borderRadius: '8px',
+                          padding: '5px 10px',
+                          fontWeight: 'bold',
+                          boxShadow: '0 2px 8px rgba(244, 67, 54, 0.5)',
+                          transform: 'rotate(5deg)'
+                        }}>
+                          Ridotto!
                         </Box>
                       )}
                     </Box>

@@ -184,6 +184,17 @@ def delete_quiz(
     db.commit()
     return None
 
+from pydantic import BaseModel
+
+class QuizAttemptResponse(BaseModel):
+    user_id: int
+    quiz_id: int
+    answer: str
+    correct: bool
+    completed: bool = False
+    points_earned: int = 0
+    current_quiz_points: int = None  # Punteggio attuale del quiz
+
 @router.post("/attempt", response_model=QuizAttemptResponse, status_code=status.HTTP_201_CREATED)
 def create_quiz_attempt(
     *,
@@ -237,12 +248,38 @@ def create_quiz_attempt(
     # Check if attempt is correct
     is_correct = attempt_in.answer == quiz.correct_answer
     
-    # If the quiz has already been completed successfully, award 0 points
-    base_points = quiz.points if is_correct else 0
+    # Recupera l'ultimo tentativo fallito per questo quiz (per tracciare il punteggio attuale)
+    last_failed_attempt = db.query(QuizAttempt).filter(
+        QuizAttempt.user_id == current_user.id,
+        QuizAttempt.quiz_id == quiz.id,
+        QuizAttempt.correct == False
+    ).order_by(QuizAttempt.created_at.desc()).first()
+    
+    # Determina il punteggio attuale del quiz per questo studente
+    current_quiz_points = quiz.points
+    
+    # Se ci sono tentativi falliti precedenti, usa il loro punteggio come base
+    if last_failed_attempt:
+        # Il punteggio attuale è il punteggio dell'ultimo tentativo fallito
+        # (che già riflette i dimezzamenti precedenti)
+        print(f"DEBUG - Trovato tentativo fallito precedente con punteggio: {last_failed_attempt.points_earned}")
+        if last_failed_attempt.points_earned > 0:  # Usa il punteggio precedente solo se è maggiore di zero
+            current_quiz_points = last_failed_attempt.points_earned
+    
+    # Calcola i punti guadagnati in base alla correttezza della risposta
+    if is_correct:
+        # Per le risposte corrette, assegna il punteggio attuale
+        base_points = current_quiz_points
+    else:
+        # Per le risposte sbagliate, dimezza il punteggio attuale fino a un minimo di 1
+        base_points = max(current_quiz_points // 2, 1)
+    
+    # Se il quiz è già stato completato con successo, non assegnare punti
     points_earned = 0 if already_completed else base_points
     
     print(f"DEBUG - Risposta corretta: {is_correct}")
-    print(f"DEBUG - Punti base del quiz: {quiz.points}")
+    print(f"DEBUG - Punti originali del quiz: {quiz.points}")
+    print(f"DEBUG - Punti attuali del quiz per lo studente: {current_quiz_points}")
     print(f"DEBUG - Punti che sarebbero guadagnati: {base_points}")
     print(f"DEBUG - Punti effettivamente assegnati: {points_earned} (azzerati: {already_completed})")
     
@@ -277,7 +314,19 @@ def create_quiz_attempt(
     db.refresh(db_attempt)
     
     print(f"Debug - Punti finali dopo commit: {current_user.points}\n\n")
-    return db_attempt
+    
+    # Creiamo una risposta personalizzata che include anche il punteggio attuale del quiz
+    response_data = QuizAttemptResponse(
+        user_id=db_attempt.user_id,
+        quiz_id=db_attempt.quiz_id,
+        answer=db_attempt.answer,
+        correct=db_attempt.correct,
+        completed=db_attempt.completed,
+        points_earned=points_earned,
+        current_quiz_points=current_quiz_points
+    )
+    
+    return response_data
 
 # Get completed quizzes for user
 # Specificare un formato di risposta semplificato per i quiz completati
@@ -285,6 +334,7 @@ from pydantic import BaseModel
 
 class CompletedQuizIdResponse(BaseModel):
     quiz_id: int
+    current_points: int = None
 
 @router.get("/completed-quizzes/", response_model=List[CompletedQuizIdResponse])
 def get_completed_quizzes(
@@ -304,12 +354,55 @@ def get_completed_quizzes(
     ).all()
     
     print(f"DEBUG - Quiz completati trovati: {len(completed_attempts)}")
-    for attempt in completed_attempts:
-        print(f"DEBUG - Quiz completato: quiz_id={attempt.quiz_id} (tipo: {type(attempt.quiz_id)}), user_id={attempt.user_id}, completed={attempt.completed}")
     
-    # Costruisci una risposta con solo gli ID dei quiz completati
-    response = [CompletedQuizIdResponse(quiz_id=attempt.quiz_id) for attempt in completed_attempts]
-    print(f"DEBUG - Risposta formattata:", response)
+    # Creazione di un dizionario per tenere traccia dei punteggi aggiornati per ogni quiz
+    quiz_points = {}
+    
+    # Cerchiamo anche tutti i tentativi falliti per determinare il punteggio attuale di ogni quiz
+    all_attempts = db.query(QuizAttempt).filter(
+        QuizAttempt.user_id == current_user.id
+    ).order_by(QuizAttempt.created_at).all()
+    
+    print(f"DEBUG - Totale tentativi trovati: {len(all_attempts)}")
+    
+    for attempt in all_attempts:
+        quiz_id = attempt.quiz_id
+        print(f"DEBUG - Trovato tentativo: quiz_id={quiz_id}, correct={attempt.correct}")
+        
+        # Inizializza il punteggio del quiz se non è già presente
+        if quiz_id not in quiz_points:
+            # Ottieni il punteggio base del quiz
+            quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
+            if quiz:
+                quiz_points[quiz_id] = quiz.points
+                print(f"DEBUG - Inizializzato punteggio per quiz_id={quiz_id}: {quiz_points[quiz_id]}")
+        
+        # Se è un tentativo fallito, dimezza il punteggio fino a un minimo di 1
+        if not attempt.correct:
+            old_points = quiz_points.get(quiz_id, 0)
+            quiz_points[quiz_id] = max(old_points // 2, 1)
+            print(f"DEBUG - Risposta sbagliata per quiz_id={quiz_id}: punteggio ridotto da {old_points} a {quiz_points[quiz_id]}")
+    
+    print(f"DEBUG - Punteggi aggiornati dei quiz: {quiz_points}")
+    
+    # Costruisci la risposta con gli ID dei quiz completati e i loro punteggi attuali
+    response = []
+    print(f"DEBUG - Preparazione risposta finale con {len(completed_attempts)} tentativi completati con successo")
+    
+    for attempt in completed_attempts:
+        quiz_id = attempt.quiz_id
+        current_points = quiz_points.get(quiz_id, None)
+        
+        # Assicuriamoci che vengano passati come interi
+        quiz_id_int = int(quiz_id) if quiz_id is not None else None
+        
+        response.append(CompletedQuizIdResponse(
+            quiz_id=quiz_id_int,
+            current_points=current_points
+        ))
+        print(f"DEBUG - Quiz completato: quiz_id={quiz_id_int} (tipo: {type(quiz_id_int)}), current_points={current_points}")
+    
+    print(f"DEBUG - Risposta formattata (DETTAGLIATA): {[{'quiz_id': r.quiz_id, 'current_points': r.current_points} for r in response]}")
     
     return response
 

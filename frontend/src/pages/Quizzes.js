@@ -29,8 +29,44 @@ const adjustColor = (color, amount) => {
 
 // Funzione utility per determinare se un quiz è completato
 const isQuizCompleted = (quizId, completedQuizzes) => {
-  // Supporta sia String che Number per il confronto
-  return completedQuizzes.has(String(quizId)) || completedQuizzes.has(Number(quizId));
+  // Assicuriamoci che quizId sia un numero
+  const quizIdNum = Number(quizId);
+  return completedQuizzes.has(quizIdNum);
+};
+
+// Funzione utility per ottenere il punteggio aggiornato di un quiz
+const getCurrentPoints = (quizId, completedQuizzes, defaultPoints) => {
+  // Assicuriamoci che quizId sia un numero
+  const quizIdNum = Number(quizId);
+  
+  console.log(`Cercando punteggio per quiz ID: ${quizIdNum}, tipo: ${typeof quizIdNum}`);
+  
+  // Primo controllo: verifichiamo se c'è un punteggio aggiornato in localStorage
+  try {
+    const updatedQuizPoints = JSON.parse(localStorage.getItem('updatedQuizPoints') || '{}');
+    if (updatedQuizPoints[quizIdNum] !== undefined) {
+      const storedPoints = Number(updatedQuizPoints[quizIdNum]);
+      console.log(`Trovato punteggio in localStorage per quiz ID ${quizIdNum}: ${storedPoints}`);
+      return storedPoints;
+    }
+  } catch (e) {
+    console.error('Errore nel leggere i punteggi da localStorage:', e);
+  }
+  
+  // Secondo controllo: verifichiamo se c'è un punteggio nella Map dei quiz completati
+  if (completedQuizzes.has(quizIdNum)) {
+    const points = completedQuizzes.get(quizIdNum);
+    console.log(`Trovato quiz ID: ${quizIdNum}, punteggio: ${points}`);
+    
+    // Se il punteggio è null o undefined, restituiamo il punteggio predefinito
+    if (points !== null && points !== undefined) {
+      return points;
+    }
+  }
+  
+  // Se il quiz non è completato o non abbiamo informazioni sul punteggio, restituisci il punteggio predefinito
+  console.log(`Quiz non completato o nessun punteggio trovato, restituisco punteggio predefinito: ${defaultPoints}`);
+  return defaultPoints;
 };
 
 function Quizzes() {
@@ -38,7 +74,7 @@ function Quizzes() {
   const [totalQuizzes, setTotalQuizzes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [completedQuizzes, setCompletedQuizzes] = useState(new Set());
+  const [completedQuizzes, setCompletedQuizzes] = useState(new Map());
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -70,20 +106,28 @@ function Quizzes() {
         // Extract completed quiz IDs if the request was successful
         if (completedResponse && completedResponse.ok) {
           const completedData = await completedResponse.json();
-          console.log('Completed quiz attempts data:', completedData);
+          console.log('Completed quiz attempts data DETTAGLIATO:', JSON.stringify(completedData, null, 2));
           
-          // Normalizziamo tutti gli ID in un Set
-          const completedIds = new Set();
+          // Usiamo una Map invece di un Set per memorizzare sia l'ID che il punteggio aggiornato
+          const completedMap = new Map();
           completedData.forEach(attempt => {
             if (attempt && attempt.quiz_id !== undefined) {
-              // Aggiungiamo sia come stringa che come numero per gestire diversi tipi
-              completedIds.add(String(attempt.quiz_id));
-              completedIds.add(Number(attempt.quiz_id));
+              // Convertiamo sempre l'ID del quiz in un numero per la consistenza
+              const quizId = Number(attempt.quiz_id);
+              // Assicuriamoci che il punteggio sia un numero o null
+              const currentPoints = attempt.current_points !== undefined && attempt.current_points !== null 
+                ? Number(attempt.current_points) 
+                : null;
+              
+              // Salviamo come chiave l'ID del quiz e come valore il punteggio attuale
+              completedMap.set(quizId, currentPoints);
+              console.log(`Quiz completato ID: ${quizId} (tipo: ${typeof quizId}), punteggio attuale: ${currentPoints}`);
             }
           });
             
-          console.log('Completed quiz IDs:', Array.from(completedIds));
-          setCompletedQuizzes(completedIds);
+          console.log('Completed quiz IDs:', Array.from(completedMap.keys()));
+          console.log('Completed quiz Points:', Array.from(completedMap.entries()));
+          setCompletedQuizzes(completedMap);
         }
         
         const data = await quizzesResponse.json();
@@ -133,6 +177,22 @@ function Quizzes() {
     };
     
     fetchQuizzes();
+    
+    // Ascoltatore dell'evento personalizzato per aggiornamenti dei punteggi
+    const handleQuizPointsUpdated = (event) => {
+      console.log('Evento quizPointsUpdated ricevuto:', event.detail);
+      // Forziamo un aggiornamento del componente quando viene aggiornato un punteggio
+      // Questo è un trucco per forzare un re-render
+      setQuizzes(prevQuizzes => [...prevQuizzes]);
+    };
+    
+    // Aggiungi l'ascoltatore dell'evento
+    window.addEventListener('quizPointsUpdated', handleQuizPointsUpdated);
+    
+    // Rimuovi l'ascoltatore quando il componente viene smontato
+    return () => {
+      window.removeEventListener('quizPointsUpdated', handleQuizPointsUpdated);
+    };
   }, [token]);
 
   const handleStartQuiz = (quizId) => {
@@ -238,8 +298,20 @@ function Quizzes() {
                         variant="body2"
                         sx={{ color: 'rgba(255,255,255,0.8)' }}
                       >
-                        Riprova se vuoi, ma non guadagnerai punti
+                        Punteggio attuale: {getCurrentPoints(quiz.id, completedQuizzes, quiz.points)}
                       </Typography>
+                      {getCurrentPoints(quiz.id, completedQuizzes, quiz.points) < quiz.points && (
+                        <Typography 
+                          variant="body2"
+                          sx={{ 
+                            color: 'rgba(255,100,100,0.9)', 
+                            fontWeight: 'bold',
+                            mt: 0.5
+                          }}
+                        >
+                          Punteggio diminuito: {getCurrentPoints(quiz.id, completedQuizzes, quiz.points)} di {quiz.points}
+                        </Typography>
+                      )}
                     </Box>
                   ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -258,7 +330,7 @@ function Quizzes() {
                           variant="h6"
                           sx={{ fontWeight: 'bold', fontSize: '1.3rem' }}
                         >
-                          {quiz.points || '?'}
+                          {getCurrentPoints(quiz.id, completedQuizzes, quiz.points)}
                         </Typography>
                       </Box>
                       <Typography 
@@ -340,29 +412,51 @@ function Quizzes() {
                   justifyContent: 'center',
                   position: 'relative'
                 }}>
-                  <Box 
+                  <Typography 
+                    variant="h6" 
                     sx={{ 
-                      bgcolor: 'success.main',
                       color: 'white',
-                      borderRadius: '50%',
-                      width: 46,
-                      height: 46,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
                       fontWeight: 'bold',
-                      fontSize: '1.6rem',
-                      boxShadow: '0 3px 6px rgba(0,200,83,0.4)',
-                      fontFamily: '"Comic Neue", "Baloo 2", sans-serif',
-                      position: 'relative',
-                      top: 5
+                      fontSize: '1.2rem',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {quiz.title}
+                  </Typography>
+                  
+                  {/* ID numero in basso a destra */}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 5,
+                      right: 10,
+                      color: 'rgba(255,255,255,0.8)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
                     }}
                   >
                     {quiz.id}
-                  </Box>
+                  </Typography>
                 </Box>
                 
-                <CardContent sx={{ flexGrow: 1, p: 3, pb: 2 }}>
+                <CardContent sx={{ position: 'relative', flexGrow: 1, pt: 5, py: 3, px: 3 }}>
+                  {/* Badge per quiz completati */}
+                  {isQuizCompleted(quiz.id, completedQuizzes) && (
+                    <Tooltip title="Quiz già completato">
+                      <CheckCircleIcon 
+                        color="success"
+                        sx={{ 
+                          position: 'absolute',
+                          top: 15,
+                          right: 15,
+                          fontSize: 28,
+                          filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))'
+                        }}
+                      />
+                    </Tooltip>
+                  )}
                   <Typography 
                     variant="body1" 
                     sx={{ 
@@ -398,6 +492,25 @@ function Quizzes() {
                         } 
                       />
                     )}
+                    
+                    {/* Chip per il punteggio del quiz */}
+                    <Chip
+                      size="small"
+                      label={
+                        getCurrentPoints(quiz.id, completedQuizzes, quiz.points) < quiz.points
+                          ? `${getCurrentPoints(quiz.id, completedQuizzes, quiz.points)}/${quiz.points} pt`
+                          : `${getCurrentPoints(quiz.id, completedQuizzes, quiz.points)} pt`
+                      }
+                      color={
+                        getCurrentPoints(quiz.id, completedQuizzes, quiz.points) < quiz.points
+                          ? "warning"
+                          : "primary"
+                      }
+                      sx={{
+                        ml: 1,
+                        height: 24
+                      }}
+                    />
                   </Box>
                 </CardContent>
                 <CardActions sx={{ p: 2, pt: 0 }}>
