@@ -7,7 +7,7 @@ from sqlalchemy import func
 from app.core.auth import get_current_user, get_current_active_user
 from app.db.session import get_db
 from app.models.user import User, UserRole
-from app.models.reward import Reward, RewardPurchase, student_reward_shop_association
+from app.models.reward import Reward, RewardPurchase, user_reward_shop_association
 from app.schemas.reward import (
     RewardCreate, RewardUpdate, Reward as RewardSchema, 
     StudentRewardAssignment, BulkRewardAssignment, 
@@ -157,24 +157,24 @@ def assign_reward_to_student_shop(
         raise HTTPException(status_code=404, detail="Reward not found")
     
     # Check if the student already has this reward in their shop
-    association = db.query(student_reward_shop_association).filter(
-        student_reward_shop_association.c.student_id == assignment.student_id,
-        student_reward_shop_association.c.reward_id == assignment.reward_id
+    association = db.query(user_reward_shop_association).filter(
+        user_reward_shop_association.c.user_id == assignment.student_id,
+        user_reward_shop_association.c.reward_id == assignment.reward_id
     ).first()
     
     if association:
         # Update the quantity
         db.execute(
-            student_reward_shop_association.update().where(
-                student_reward_shop_association.c.student_id == assignment.student_id,
-                student_reward_shop_association.c.reward_id == assignment.reward_id
-            ).values(quantity=student_reward_shop_association.c.quantity + assignment.quantity)
+            user_reward_shop_association.update().where(
+                user_reward_shop_association.c.user_id == assignment.student_id,
+                user_reward_shop_association.c.reward_id == assignment.reward_id
+            ).values(quantity=user_reward_shop_association.c.quantity + assignment.quantity)
         )
     else:
         # Create a new association
         db.execute(
-            student_reward_shop_association.insert().values(
-                student_id=assignment.student_id,
+            user_reward_shop_association.insert().values(
+                user_id=assignment.student_id,
                 reward_id=assignment.reward_id,
                 quantity=assignment.quantity
             )
@@ -227,24 +227,24 @@ def bulk_assign_reward(
             continue  # Skip if student doesn't exist or isn't a student
         
         # Check if the student already has this reward in their shop
-        association = db.query(student_reward_shop_association).filter(
-            student_reward_shop_association.c.student_id == student_id,
-            student_reward_shop_association.c.reward_id == bulk_assignment.reward_id
+        association = db.query(user_reward_shop_association).filter(
+            user_reward_shop_association.c.user_id == student_id,
+            user_reward_shop_association.c.reward_id == bulk_assignment.reward_id
         ).first()
         
         if association:
             # Update the quantity
             db.execute(
-                student_reward_shop_association.update().where(
-                    student_reward_shop_association.c.student_id == student_id,
-                    student_reward_shop_association.c.reward_id == bulk_assignment.reward_id
-                ).values(quantity=student_reward_shop_association.c.quantity + bulk_assignment.quantity)
+                user_reward_shop_association.update().where(
+                    user_reward_shop_association.c.user_id == student_id,
+                    user_reward_shop_association.c.reward_id == bulk_assignment.reward_id
+                ).values(quantity=user_reward_shop_association.c.quantity + bulk_assignment.quantity)
             )
         else:
             # Create a new association
             db.execute(
-                student_reward_shop_association.insert().values(
-                    student_id=student_id,
+                user_reward_shop_association.insert().values(
+                    user_id=student_id,
                     reward_id=bulk_assignment.reward_id,
                     quantity=bulk_assignment.quantity
                 )
@@ -274,9 +274,9 @@ def remove_reward_from_student_shop(
     
     # Delete the association
     result = db.execute(
-        student_reward_shop_association.delete().where(
-            student_reward_shop_association.c.student_id == student_id,
-            student_reward_shop_association.c.reward_id == reward_id
+        user_reward_shop_association.delete().where(
+            user_reward_shop_association.c.user_id == student_id,
+            user_reward_shop_association.c.reward_id == reward_id
         )
     )
     
@@ -300,12 +300,12 @@ def get_student_shop(
     # Get rewards from the student's shop with quantity
     shop_rewards = db.query(
         Reward, 
-        student_reward_shop_association.c.quantity.label("quantity")
+        user_reward_shop_association.c.quantity.label("quantity")
     ).join(
-        student_reward_shop_association,
-        Reward.id == student_reward_shop_association.c.reward_id
+        user_reward_shop_association,
+        Reward.id == user_reward_shop_association.c.reward_id
     ).filter(
-        student_reward_shop_association.c.student_id == current_user.id,
+        user_reward_shop_association.c.user_id == current_user.id,
         Reward.is_active == True
     ).all()
     
@@ -339,9 +339,9 @@ def purchase_reward(
         raise HTTPException(status_code=403, detail="Not authorized - only students can purchase rewards")
     
     # Check if the reward is in the student's shop
-    association = db.query(student_reward_shop_association).filter(
-        student_reward_shop_association.c.student_id == current_user.id,
-        student_reward_shop_association.c.reward_id == purchase.reward_id
+    association = db.query(user_reward_shop_association).filter(
+        user_reward_shop_association.c.user_id == current_user.id,
+        user_reward_shop_association.c.reward_id == purchase.reward_id
     ).first()
     
     if not association:
@@ -360,9 +360,9 @@ def purchase_reward(
     if current_user.points < reward.point_cost:
         raise HTTPException(status_code=400, detail=f"Not enough points. You need {reward.point_cost} points but have {current_user.points}")
     
-    # Create purchase transaction
-    db_purchase = RewardPurchase(
-        student_id=current_user.id,
+    # Create purchase record
+    purchase_record = RewardPurchase(
+        user_id=current_user.id,
         reward_id=reward.id,
         point_cost=reward.point_cost,
         is_delivered=False
@@ -376,25 +376,25 @@ def purchase_reward(
     if current_quantity <= 1:
         # Delete the association if quantity would become 0
         db.execute(
-            student_reward_shop_association.delete().where(
-                student_reward_shop_association.c.student_id == current_user.id,
-                student_reward_shop_association.c.reward_id == reward.id
+            user_reward_shop_association.delete().where(
+                user_reward_shop_association.c.user_id == current_user.id,
+                user_reward_shop_association.c.reward_id == reward.id
             )
         )
     else:
         # Decrease quantity by 1
         db.execute(
-            student_reward_shop_association.update().where(
-                student_reward_shop_association.c.student_id == current_user.id,
-                student_reward_shop_association.c.reward_id == reward.id
+            user_reward_shop_association.update().where(
+                user_reward_shop_association.c.user_id == current_user.id,
+                user_reward_shop_association.c.reward_id == reward.id
             ).values(quantity=current_quantity - 1)
         )
     
-    db.add(db_purchase)
+    db.add(purchase_record)
     db.commit()
-    db.refresh(db_purchase)
+    db.refresh(purchase_record)
     
-    return db_purchase
+    return purchase_record
 
 @router.get("/student/purchases/", response_model=List[RewardPurchaseSchema], tags=["rewards"])
 def get_student_purchases(
@@ -406,7 +406,7 @@ def get_student_purchases(
         raise HTTPException(status_code=403, detail="Not authorized - only students can view their purchases")
     
     purchases = db.query(RewardPurchase).filter(
-        RewardPurchase.student_id == current_user.id
+        RewardPurchase.user_id == current_user.id
     ).order_by(RewardPurchase.created_at.desc()).all()
     
     return purchases
@@ -432,12 +432,12 @@ def get_student_shop_for_parent(
     # Get rewards from the student's shop with quantity
     rewards_query = db.query(
         Reward,
-        student_reward_shop_association.c.quantity.label("quantity")
+        user_reward_shop_association.c.quantity.label("quantity")
     ).join(
-        student_reward_shop_association,
-        Reward.id == student_reward_shop_association.c.reward_id
+        user_reward_shop_association,
+        Reward.id == user_reward_shop_association.c.reward_id
     ).filter(
-        student_reward_shop_association.c.student_id == student_id,
+        user_reward_shop_association.c.user_id == student_id,
         Reward.is_active == True
     )
     
@@ -476,7 +476,7 @@ def get_student_purchases_admin(
     
     # Get student's purchases
     purchases = db.query(RewardPurchase).filter(
-        RewardPurchase.student_id == student_id
+        RewardPurchase.user_id == student_id
     ).order_by(RewardPurchase.created_at.desc()).all()
     
     return purchases
@@ -505,7 +505,7 @@ def update_purchase_status(
         raise HTTPException(status_code=404, detail="Purchase not found")
     
     # If parent, check if the student is their child
-    if is_parent and purchase.student_id not in [s.id for s in current_user.students]:
+    if is_parent and purchase.user_id not in [s.id for s in current_user.students]:
         raise HTTPException(status_code=403, detail="Not authorized to update this purchase")
     
     # Update the purchase

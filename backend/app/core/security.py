@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.user import User
+from app.models.user import User, parent_student_association
+
+# Algoritmo utilizzato per JWT
+ALGORITHM = "HS256"
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -105,3 +108,19 @@ def check_parent_or_admin_privileges(current_user: User = Depends(get_current_ac
             detail="Insufficient privileges",
         )
     return current_user
+
+def verify_parent_student_relation(
+    db: Session,
+    parent_id: int, 
+    student_id: int
+) -> bool:
+    """
+    Verifica che esista una relazione genitore-figlio tra i due utenti.
+    """
+    # Verifica la relazione nella tabella di associazione
+    relation = db.query(parent_student_association).filter(
+        parent_student_association.c.parent_id == parent_id,
+        parent_student_association.c.student_id == student_id
+    ).first()
+    
+    return relation is not None

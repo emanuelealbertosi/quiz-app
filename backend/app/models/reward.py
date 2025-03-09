@@ -4,10 +4,10 @@ from sqlalchemy.orm import relationship
 from app.models.base import BaseModel, Base
 
 # Association table for the many-to-many relationship between students and rewards in shop
-student_reward_shop_association = Table(
-    "student_reward_shop_association",
+user_reward_shop_association = Table(
+    "user_reward_shop_association",
     Base.metadata,
-    Column("student_id", Integer, ForeignKey("users.id")),
+    Column("user_id", Integer, ForeignKey("users.id")),
     Column("reward_id", Integer, ForeignKey("rewards.id")),
     Column("quantity", Integer, default=1),  # Quantity of this reward available in student's shop
 )
@@ -28,10 +28,15 @@ class Reward(BaseModel):
     
     # Relationships
     creator = relationship("User", foreign_keys=[creator_id])
-    students_shops = relationship(
+    users_shops = relationship(
         "User",
-        secondary=student_reward_shop_association,
+        secondary=user_reward_shop_association,
         backref="shop_rewards"
+    )
+    users = relationship(
+        "User",
+        secondary="user_reward_association",
+        back_populates="rewards"
     )
     purchases = relationship("RewardPurchase", back_populates="reward")
     
@@ -44,11 +49,11 @@ class RewardPurchase(BaseModel):
     __tablename__ = "reward_purchases"
     
     # Foreign keys
-    student_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     reward_id = Column(Integer, ForeignKey("rewards.id"), nullable=False)
     
     # Relationships
-    student = relationship("User", backref="purchased_rewards")
+    user = relationship("User", back_populates="purchases")
     reward = relationship("Reward", back_populates="purchases")
     
     # Purchase information
@@ -56,4 +61,4 @@ class RewardPurchase(BaseModel):
     is_delivered = Column(Boolean, default=False)  # Whether the reward has been delivered
     
     def __repr__(self):
-        return f"<RewardPurchase reward_id={self.reward_id}, student_id={self.student_id}>"
+        return f"<RewardPurchase reward_id={self.reward_id}, user_id={self.user_id}>"

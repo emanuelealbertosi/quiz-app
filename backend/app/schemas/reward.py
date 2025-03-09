@@ -51,7 +51,7 @@ class RewardPurchaseCreate(BaseModel):
 # Schema for reward purchase in response
 class RewardPurchase(BaseModel):
     id: int
-    student_id: int
+    user_id: int
     reward_id: int
     point_cost: int
     is_delivered: bool = False

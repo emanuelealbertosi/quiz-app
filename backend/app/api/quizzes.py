@@ -12,7 +12,7 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.user import User
-from app.models.quiz import Quiz, Category, DifficultyLevel
+from app.models.quiz import Quiz, Category, DifficultyLevel, Path, quiz_path_association
 from app.schemas.quiz import (
     QuizCreate,
     QuizUpdate,
@@ -287,7 +287,7 @@ def create_quiz_attempt(
     from app.models.challenge import QuizAttempt
     
     db_attempt = QuizAttempt(
-        user_id=current_user.id,
+        user=current_user,
         quiz_id=quiz.id,
         answer=attempt_in.answer,
         correct=is_correct,  # Nel modello si chiama 'correct' non 'is_correct'
@@ -314,6 +314,68 @@ def create_quiz_attempt(
     db.refresh(db_attempt)
     
     print(f"Debug - Punti finali dopo commit: {current_user.points}\n\n")
+    
+    # Se la risposta è corretta, segna il quiz come completato nei percorsi associati
+    if is_correct:
+        # Trova tutti i percorsi che contengono questo quiz e che sono assegnati allo studente
+        from app.models.quiz import Path, quiz_path_association
+        from app.models.challenge import UserProgress
+        from sqlalchemy import and_
+        
+        # Query per trovare i percorsi che contengono questo quiz
+        paths_with_quiz = db.query(Path).join(
+            quiz_path_association,
+            and_(
+                quiz_path_association.c.path_id == Path.id,
+                quiz_path_association.c.quiz_id == quiz.id
+            )
+        ).all()
+        
+        # Per ogni percorso trovato, verifica se lo studente ha un progresso attivo
+        for path in paths_with_quiz:
+            user_progress = db.query(UserProgress).filter(
+                and_(
+                    UserProgress.user_id == current_user.id,
+                    UserProgress.path_id == path.id,
+                    UserProgress.completed == False
+                )
+            ).first()
+            
+            if user_progress:
+                # Conta i quiz già completati in questo percorso
+                from sqlalchemy import select, func
+                
+                # Trova tutti i quiz del percorso
+                stmt = select([quiz_path_association.c.quiz_id]).where(
+                    quiz_path_association.c.path_id == path.id
+                )
+                quiz_ids_in_path = [row[0] for row in db.execute(stmt)]
+                
+                # Trova i tentativi completati con successo per questi quiz
+                completed_in_path = db.query(func.count(QuizAttempt.id)).filter(
+                    and_(
+                        QuizAttempt.user_id == current_user.id,
+                        QuizAttempt.quiz_id.in_(quiz_ids_in_path),
+                        QuizAttempt.completed == True
+                    )
+                ).scalar()
+                
+                # Aggiorna il progresso dell'utente
+                user_progress.completed_quizzes = completed_in_path
+                
+                # Verifica se tutti i quiz sono stati completati
+                if completed_in_path >= len(quiz_ids_in_path):
+                    user_progress.completed = True
+                    
+                    # Assegna i punti bonus
+                    current_user.points += path.bonus_points
+                    print(f"Debug - Percorso completato! Bonus: {path.bonus_points} punti")
+                
+                db.add(user_progress)
+        
+        # Commit delle modifiche aggiuntive
+        db.commit()
+        db.refresh(current_user)
     
     # Creiamo una risposta personalizzata che include anche il punteggio attuale del quiz
     response_data = QuizAttemptResponse(

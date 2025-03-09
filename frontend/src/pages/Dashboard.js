@@ -4,6 +4,8 @@ import AdminPanel from '../components/AdminPanel';
 import RewardManagement from '../components/RewardManagement';
 import RewardShop from '../components/RewardShop';
 import ParentRewardManagement from '../components/ParentRewardManagement';
+import PathManagement from '../components/parent/PathManagement';
+import PathProgress from '../components/student/PathProgress';
 import { ENDPOINTS } from '../config';
 
 function Dashboard() {
@@ -187,6 +189,7 @@ function Dashboard() {
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
               <Tabs value={tabValue} onChange={handleTabChange}>
                 <Tab label="Dashboard" />
+                <Tab label="Percorsi" />
                 <Tab label="Rewards Shop" />
               </Tabs>
             </Box>
@@ -195,26 +198,38 @@ function Dashboard() {
               <Typography paragraph>
                 More dashboard content would go here...
               </Typography>
+            ) : tabValue === 1 ? (
+              <PathProgress />
             ) : (
               <RewardShop 
                 token={token} 
                 userPoints={userInfo.points || 0} 
-                onPointsUpdated={handlePointsUpdate} 
+                onPointsUpdate={handlePointsUpdate}
               />
             )}
           </Box>
         )}
 
-        {isParent && (
+        {userInfo && userInfo.role === 'parent' && (
           <Box sx={{ mt: 4 }}>
             <Divider sx={{ mb: 4 }} />
-            <Typography variant="h5" component="h2" gutterBottom>
-              Parent Management
-            </Typography>
-            <Typography paragraph>
-              As a parent, you can manage rewards for your children.
-            </Typography>
-            <ParentRewardManagement token={token} />
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tab label="Dashboard" />
+                <Tab label="Percorsi" />
+                <Tab label="Student Rewards" />
+              </Tabs>
+            </Box>
+
+            {tabValue === 0 ? (
+              <Typography paragraph>
+                Parent dashboard content would go here...
+              </Typography>
+            ) : tabValue === 1 ? (
+              <PathManagement />
+            ) : (
+              <ParentRewardManagement token={token} />
+            )}
           </Box>
         )}
 

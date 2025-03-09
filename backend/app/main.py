@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from app.api import auth, users, quizzes, categories, challenges, progress, admin, test, rewards
+from app.api import auth, users, quizzes, categories, challenges, progress, admin, test, rewards, paths
 from app.core.config import settings
 from app.db.session import engine, get_db
 from app.models import base
@@ -40,6 +40,7 @@ app.include_router(progress.router, prefix=f"{settings.API_V1_STR}/progress", ta
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["Admin"])
 app.include_router(test.router, prefix=f"{settings.API_V1_STR}/test", tags=["Test"])
 app.include_router(rewards.router, prefix=f"{settings.API_V1_STR}", tags=["Rewards"])
+app.include_router(paths.router, prefix=f"{settings.API_V1_STR}/paths", tags=["Paths"])
 
 @app.get("/")
 def read_root():

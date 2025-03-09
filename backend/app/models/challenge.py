@@ -40,7 +40,7 @@ class QuizAttempt(BaseModel):
     quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
     
     # Relationships
-    student = relationship("User", back_populates="quiz_attempts")
+    user = relationship("User", back_populates="quiz_attempts")
     quiz = relationship("Quiz", back_populates="attempts")
 
 class UserChallenge(BaseModel):
@@ -67,6 +67,7 @@ class UserProgress(BaseModel):
     points = Column(Integer, default=0)
     level = Column(Integer, default=1)
     completed_quizzes = Column(Integer, default=0)
+    completed = Column(Boolean, default=False)
     
     # Foreign keys
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -74,7 +75,7 @@ class UserProgress(BaseModel):
     
     # Relationships
     user = relationship("User", back_populates="progress")
-    path = relationship("Path")
+    path = relationship("Path", back_populates="user_progress")
 
 class UserReward(BaseModel):
     """Model for user rewards and achievements"""
@@ -90,4 +91,4 @@ class UserReward(BaseModel):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    user = relationship("User", back_populates="rewards")
+    user = relationship("User", back_populates="user_rewards")

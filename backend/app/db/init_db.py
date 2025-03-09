@@ -50,7 +50,7 @@ def init_db(db: Session) -> None:
             path = Path(
                 name=path_name,
                 description=f"{path_name} learning path",
-                required_points=0 if path_name == "Beginner" else 100 if path_name == "Intermediate" else 300,
+                bonus_points=10 if path_name == "Beginner" else 20 if path_name == "Intermediate" else 30,
                 creator_id=admin.id
             )
             db.add(path)

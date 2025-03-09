@@ -15,10 +15,11 @@ Un'applicazione web interattiva che permette agli studenti di esercitarsi con qu
 - **Sistema di quiz**: Creazione, modifica e gestione dei quiz con categorie e livelli di difficoltà
 - **Sistema di sfide**: Creazione e gestione di sfide per gli studenti
 - **Monitoraggio progressi**: Tracciamento dei tentativi e dei risultati degli studenti
+- **Sistema di premi**: Permette agli studenti di acquistare premi utilizzando i punti guadagnati completando i quiz. Gli admin possono creare e gestire i premi, mentre i genitori possono gestire i premi per i loro figli.
+- **Sistema di percorsi di apprendimento**: Consente ai genitori di creare percorsi personalizzati composti da quiz multipli, assegnarli ai propri figli e monitorarne il completamento. Gli studenti guadagnano punti bonus al completamento di un intero percorso.
 - **Interfaccia responsive**: Design moderno con Material-UI
 
 ### Funzionalità da Implementare
-- **Sistema di premi**: Implementare un sistema di premi per gli studenti basato sui punti accumulati
 - **Interfaccia per genitori**: Migliorare la dashboard per i genitori per monitorare i progressi dei figli
 - **Modalità di gioco avanzate**: Quiz a tempo, sfide tra studenti, tornei
 - **Esportazione dati**: Aggiungere funzionalità per esportare statistiche e progressi

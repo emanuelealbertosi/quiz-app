@@ -1,7 +1,7 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Text, JSON, Boolean, Table
+from sqlalchemy import Column, String, Integer, ForeignKey, Text, JSON, Boolean, Table, Float, DateTime, func
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel, Base
+from app.models.base import Base, BaseModel
 
 # Association table for the many-to-many relationship between quizzes and categories
 quiz_category_association = Table(
@@ -13,10 +13,10 @@ quiz_category_association = Table(
 
 # Association table for the many-to-many relationship between quizzes and paths
 quiz_path_association = Table(
-    "quiz_path_association",
+    'quiz_path_association',
     Base.metadata,
-    Column("quiz_id", Integer, ForeignKey("quizzes.id")),
-    Column("path_id", Integer, ForeignKey("paths.id")),
+    Column('quiz_id', Integer, ForeignKey('quizzes.id'), primary_key=True),
+    Column('path_id', Integer, ForeignKey('paths.id'), primary_key=True)
 )
 
 class Category(BaseModel):
@@ -87,27 +87,22 @@ class Quiz(BaseModel):
         return f"<Quiz id={self.id}, question_preview={self.question[:30]}...>"
 
 class Path(BaseModel):
-    """Model for quiz paths (sequences of quizzes with bonus points)"""
+    """Model for learning paths"""
     
     __tablename__ = "paths"
     
-    name = Column(String, nullable=False)
+    name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     bonus_points = Column(Integer, default=10)
-    required_points = Column(Integer, default=0)
-    icon = Column(String, nullable=True)
     
     # Foreign keys
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    creator = relationship("User")
-    quizzes = relationship(
-        "Quiz", 
-        secondary=quiz_path_association,
-        back_populates="paths"
-    )
+    quizzes = relationship("Quiz", secondary=quiz_path_association, back_populates="paths")
+    creator = relationship("User", back_populates="created_paths")
+    user_progress = relationship("UserProgress", back_populates="path")
     challenges = relationship("Challenge", back_populates="path")
-    
+
     def __repr__(self):
         return f"<Path {self.name}, bonus_points={self.bonus_points}>"

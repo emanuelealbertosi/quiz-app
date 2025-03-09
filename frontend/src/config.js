@@ -15,10 +15,17 @@ const ENDPOINTS = {
   QUIZZES: `${API_BASE_URL}/api/v1/quizzes`,
   QUIZ_DETAIL: (quizId) => `${API_BASE_URL}/api/v1/quizzes/${quizId}`,
   SUBMIT_QUIZ: (quizId) => `${API_BASE_URL}/api/v1/quizzes/${quizId}/submit`,
+  COMPLETED_QUIZZES: `${API_BASE_URL}/api/v1/quizzes/completed-quizzes/`,
+  
+  // Path endpoints
   PATHS: `${API_BASE_URL}/api/v1/paths`,
   PATH_DETAIL: (pathId) => `${API_BASE_URL}/api/v1/paths/${pathId}`,
+  MY_PATHS: `${API_BASE_URL}/api/v1/paths/my-paths`,
+  ASSIGNED_PATHS: (studentId) => `${API_BASE_URL}/api/v1/paths/assigned/${studentId}`,
+  ASSIGN_PATH: `${API_BASE_URL}/api/v1/paths/assign`,
+  COMPLETE_QUIZ_IN_PATH: (pathId, quizId) => `${API_BASE_URL}/api/v1/paths/complete-quiz/${pathId}/${quizId}`,
+  
   STUDENT_PROGRESS: `${API_BASE_URL}/api/v1/student/progress`,
-  COMPLETED_QUIZZES: `${API_BASE_URL}/api/v1/quizzes/completed-quizzes/`,
   
   // Reward endpoints
   REWARDS: `${API_BASE_URL}/api/v1/rewards`,
@@ -29,6 +36,7 @@ const ENDPOINTS = {
   },
   PARENT: {
     STUDENT_SHOP: (studentId) => `${API_BASE_URL}/api/v1/parent/student-shop/${studentId}`,
+    STUDENT_PATHS: (studentId) => `${API_BASE_URL}/api/v1/paths/assigned/${studentId}`,
   },
   
   // Admin endpoints
