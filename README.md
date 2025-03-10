@@ -92,6 +92,33 @@ Dopo l'avvio, potrai accedere a:
 - `PathQuiz` -> `path`, `attempts`, `original_quiz`
 - `PathQuizAttempt` -> `user`, `path_quiz`
 
+### Testing dell'Applicazione
+
+#### Test del Sistema di Percorsi di Apprendimento
+
+L'applicazione include uno script di test dedicato (`backend/test_path_quiz.py`) per verificare il corretto funzionamento del sistema di copia dei quiz nei percorsi di apprendimento. Lo script esegue i seguenti passaggi:
+
+1. Login come genitore
+2. Recupero dei quiz disponibili
+3. Creazione di un nuovo percorso di apprendimento con i quiz selezionati
+4. Assegnazione del percorso a uno studente
+5. Login come studente
+6. Completamento di un quiz nel percorso
+7. Verifica dei quiz completati
+
+Per eseguire il test:
+
+```bash
+# Assicurarsi che l'applicazione sia in esecuzione
+./local-start.sh start
+
+# Eseguire lo script di test
+cd backend
+python test_path_quiz.py
+```
+
+Un output di successo mostrerà il processo completo e terminerà con "Test completato con successo!".
+
 ### Gestione utenti
 - **Ruoli**: `admin`, `parent`, `student`
 - Gli utenti devono avere una password crittografata con la funzione `get_password_hash`
