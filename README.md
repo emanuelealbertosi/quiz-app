@@ -25,6 +25,7 @@ Un'applicazione web interattiva che permette agli studenti di esercitarsi con qu
 - **Esportazione dati**: Aggiungere funzionalità per esportare statistiche e progressi
 - **Personalizzazione profilo**: Permettere agli utenti di personalizzare il proprio profilo con avatar e preferenze
 - **Notifiche**: Sistema di notifiche per nuove sfide, premi ottenuti, ecc.
+- **Correggere percorsi e visualizzazione quiz**: Utilizzare i quiz come template per creare copie dei quiz nei percorsi ogni volta che vengono assegnati
 
 ## Tecnologie Utilizzate
 
@@ -32,6 +33,43 @@ Un'applicazione web interattiva che permette agli studenti di esercitarsi con qu
 - **Frontend**: React.js con Material-UI
 - **Database**: PostgreSQL
 - **Containerizzazione**: Docker e Docker Compose
+
+## Appunti Implementazione
+
+### Sistema di Quiz nei Percorsi
+- I quiz nei percorsi sono implementati come copie dedicate dei quiz originali
+- Ogni copia (PathQuiz) mantiene un riferimento al quiz originale tramite `original_quiz_id`
+- I tentativi degli studenti sono tracciati tramite il modello `PathQuizAttempt`
+- L'endpoint API è `/api/v1/path-quizzes/*`
+- Il completamento di un quiz nel percorso aggiunge punti allo studente in base al valore del quiz
+- È possibile verificare quali quiz di un percorso sono stati completati tramite l'endpoint `/api/v1/path-quizzes/completed/{path_id}`
+
+### Richieste API
+- Login: Usare `requests.post('/api/v1/login', data={'username': '...', 'password': '...'})` (richiede form-data, non JSON)
+- La porta del server è 9999: `http://localhost:9999/`
+- Il database PostgreSQL usa la porta 5433: `postgresql://postgres:password@localhost:5433/quiz_app`
+
+### Endpoints principali
+- **Login**: `POST /api/v1/login` (form-data con username/password)
+- **Creazione percorso**: `POST /api/v1/paths/` (JSON con name, description, quiz_ids, bonus_points)
+- **Assegnazione percorso**: `POST /api/v1/paths/assign` (JSON con path_id, user_id)
+- **Quiz in percorso**: `GET /api/v1/path-quizzes/path/{path_id}`
+- **Dettagli quiz in percorso**: `GET /api/v1/path-quizzes/{path_quiz_id}`
+- **Tentativo quiz**: `POST /api/v1/path-quizzes/attempt` (JSON con path_quiz_id, answer, show_explanation)
+- **Quiz completati**: `GET /api/v1/path-quizzes/completed/{path_id}`
+
+### Modelli Database
+- `User` -> `created_quizzes`, `quiz_attempts`, `path_quiz_attempts`, etc.
+- `Path` -> `creator`, `quizzes`, `path_quizzes`
+- `PathQuiz` -> `path`, `attempts`, `original_quiz`
+- `PathQuizAttempt` -> `user`, `path_quiz`
+
+### Gestione utenti
+- **Ruoli**: `admin`, `parent`, `student`
+- Gli utenti devono avere una password crittografata con la funzione `get_password_hash`
+- I genitori possono creare percorsi e assegnarli ai propri figli
+- Gli studenti possono vedere solo i percorsi loro assegnati
+- L'assegnazione di un percorso crea copie dei quiz (path_quiz) che lo studente può tentare
 
 ## Installazione e Avvio
 
