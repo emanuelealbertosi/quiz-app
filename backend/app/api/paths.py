@@ -364,10 +364,27 @@ def assign_path_to_student(
         db.delete(existing_assignment)
         db.commit()
         
-        # Poi elimina i PathQuiz esistenti per questo percorso
+        # Poi elimina i PathQuizAttempt esistenti per i quiz di questo percorso
+        from app.models.challenge import PathQuizAttempt
         from app.models.quiz import PathQuiz
-        existing_path_quizzes = db.query(PathQuiz).filter(PathQuiz.path_id == path.id).all()
-        for path_quiz in existing_path_quizzes:
+        
+        # Ottieni prima i PathQuiz per il percorso
+        path_quizzes = db.query(PathQuiz).filter(PathQuiz.path_id == path.id).all()
+        path_quiz_ids = [pq.id for pq in path_quizzes]
+        
+        # Elimina tutti i PathQuizAttempt relativi a questi path_quiz_ids
+        if path_quiz_ids:
+            attempts_to_delete = db.query(PathQuizAttempt).filter(
+                PathQuizAttempt.path_quiz_id.in_(path_quiz_ids),
+                PathQuizAttempt.user_id == student.id
+            ).all()
+            
+            for attempt in attempts_to_delete:
+                db.delete(attempt)
+            db.commit()
+        
+        # Poi elimina i PathQuiz esistenti per questo percorso
+        for path_quiz in path_quizzes:
             db.delete(path_quiz)
         db.commit()
         
