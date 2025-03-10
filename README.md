@@ -36,8 +36,36 @@ Un'applicazione web interattiva che permette agli studenti di esercitarsi con qu
 
 ## Appunti Implementazione
 
-### Sistema di Quiz nei Percorsi
-- I quiz nei percorsi sono implementati come copie dedicate dei quiz originali
+### Avvio e Arresto dell'Applicazione
+
+È disponibile uno script di utilità per avviare e arrestare facilmente l'applicazione in locale:
+
+```bash
+# Avviare l'applicazione
+./local-start.sh start
+
+# Arrestare l'applicazione
+./local-start.sh stop
+
+# Riavviare l'applicazione
+./local-start.sh restart
+```
+
+Lo script gestisce automaticamente:
+- Avvio del backend (FastAPI) sulla porta 9999
+- Avvio del frontend (React) sulla porta 3000
+- Arresto pulito di tutti i processi associati
+- Riavvio completo dell'applicazione
+
+Questo è il metodo consigliato per avviare e arrestare l'applicazione durante lo sviluppo locale, in quanto assicura che tutti i processi vengano terminati correttamente.
+
+Dopo l'avvio, potrai accedere a:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:9999
+- Documentazione API: http://localhost:9999/docs
+
+### Sistema di Percorsi di Apprendimento
+- I percorsi sono implementati come copie dedicate dei quiz originali
 - Ogni copia (PathQuiz) mantiene un riferimento al quiz originale tramite `original_quiz_id`
 - I tentativi degli studenti sono tracciati tramite il modello `PathQuizAttempt`
 - L'endpoint API è `/api/v1/path-quizzes/*`
@@ -196,6 +224,28 @@ npm install
 # Avvio del frontend
 npm start
 ```
+
+### Opzione 3: Utilizzo dello script local-start.sh
+
+Per semplificare l'avvio e l'arresto dell'applicazione in ambiente di sviluppo, è disponibile uno script di utilità `local-start.sh` che gestisce contemporaneamente backend e frontend:
+
+```bash
+# Avviare l'applicazione (backend e frontend)
+./local-start.sh start
+
+# Arrestare l'applicazione
+./local-start.sh stop
+
+# Riavviare l'applicazione
+./local-start.sh restart
+```
+
+Questo script:
+- Avvia il backend sulla porta 9999 con ricaricamento automatico
+- Avvia il frontend sulla porta 3000
+- Gestisce l'arresto corretto di tutti i processi associati
+
+È l'opzione consigliata per lo sviluppo locale quando non si utilizza Docker.
 
 ### Accesso all'applicazione
 
